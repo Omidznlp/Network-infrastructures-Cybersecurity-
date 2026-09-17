@@ -96,6 +96,10 @@ jobs:
             wireless controllers and load balancers from vendors such as Cisco, Fortinet, Palo Alto,
             Juniper, F5, Citrix, Ivanti, HPE Aruba, MikroTik and Ubiquiti.
 
+            Only the Read and Write tools are available - Bash is intentionally blocked, because
+            this job processes untrusted text harvested from the public internet. Do not attempt
+            shell commands; read the files directly and write your answer with Write.
+
             Do this:
             1. Read `config/analysis_schema.json`. Your output must match that schema exactly.
             2. Read `data/collected.json`. Analyse the first 25 entries of its `items` array. The

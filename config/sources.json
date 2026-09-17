@@ -1,0 +1,33 @@
+{
+  "_comment": "tier: psirt = vendor advisories (always relevant), news = general security press, research = threat-intel blogs, gov = national CERTs. Set enabled:false to mute a feed. Unreachable feeds are skipped with a warning, never fatal.",
+  "feeds": [
+    {"name": "CISA Advisories",            "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml", "tier": "gov", "enabled": true},
+    {"name": "NCSC UK",                    "url": "https://www.ncsc.gov.uk/api/1/services/v1/report-rss-feed.xml", "tier": "gov", "enabled": true},
+    {"name": "Cisco PSIRT",                "url": "https://sec.cloudapps.cisco.com/security/center/psirtrss20/CiscoSecurityAdvisory.xml", "tier": "psirt", "enabled": true},
+    {"name": "Palo Alto Networks PSIRT",   "url": "https://security.paloaltonetworks.com/rss.xml", "tier": "psirt", "enabled": true},
+    {"name": "Fortinet PSIRT",             "url": "https://filestore.fortinet.com/fortiguard/rss/ir.xml", "tier": "psirt", "enabled": true},
+    {"name": "Zero Day Initiative",        "url": "https://www.zerodayinitiative.com/rss/published/", "tier": "research", "enabled": true},
+    {"name": "BleepingComputer",           "url": "https://www.bleepingcomputer.com/feed/", "tier": "news", "enabled": true},
+    {"name": "The Hacker News",            "url": "https://feeds.feedburner.com/TheHackersNews", "tier": "news", "enabled": true},
+    {"name": "SecurityWeek",               "url": "https://www.securityweek.com/feed/", "tier": "news", "enabled": true},
+    {"name": "The Record",                 "url": "https://therecord.media/feed", "tier": "news", "enabled": true},
+    {"name": "Dark Reading",               "url": "https://www.darkreading.com/rss.xml", "tier": "news", "enabled": true},
+    {"name": "Help Net Security",          "url": "https://www.helpnetsecurity.com/feed/", "tier": "news", "enabled": true},
+    {"name": "SANS Internet Storm Center", "url": "https://isc.sans.edu/rssfeed_full.xml", "tier": "research", "enabled": true},
+    {"name": "Cisco Talos",                "url": "https://blog.talosintelligence.com/rss/", "tier": "research", "enabled": true},
+    {"name": "Unit 42",                    "url": "https://unit42.paloaltonetworks.com/feed/", "tier": "research", "enabled": true},
+    {"name": "Rapid7 Blog",                "url": "https://www.rapid7.com/blog/rss/", "tier": "research", "enabled": true},
+    {"name": "watchTowr Labs",             "url": "https://labs.watchtowr.com/rss/", "tier": "research", "enabled": true},
+    {"name": "Krebs on Security",          "url": "https://krebsonsecurity.com/feed/", "tier": "news", "enabled": true},
+    {"name": "GreyNoise Blog",             "url": "https://www.greynoise.io/blog/rss.xml", "tier": "research", "enabled": true},
+    {"name": "Shadowserver Reports",       "url": "https://www.shadowserver.org/feed/", "tier": "research", "enabled": false},
+    {"name": "Juniper Security Advisories","url": "https://supportportal.juniper.net/s/sfsites/aura?rss", "tier": "psirt", "enabled": false},
+    {"name": "SonicWall PSIRT",            "url": "https://psirt.global.sonicwall.com/rss", "tier": "psirt", "enabled": false}
+  ],
+  "enrichment": {
+    "kev_url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+    "epss_url": "https://api.first.org/data/v1/epss?cve=",
+    "enable_kev": true,
+    "enable_epss": true
+  }
+}

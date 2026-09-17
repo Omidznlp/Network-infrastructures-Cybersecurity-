@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+digest_summary.txt
+_site/
+.jekyll-cache/
+.venv/

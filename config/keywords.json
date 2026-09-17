@@ -1,0 +1,132 @@
+{
+  "_comment": "Scoring: a headline must reach min_score to enter the digest. Vendor/product hits weigh most, then device class, then generic network terms. PSIRT feeds bypass scoring.",
+  "min_score": 4,
+  "watchlist_score": 2,
+  "vendors": {
+    "cisco":      {"weight": 4, "terms": ["cisco", "ios xe", "ios-xe", "asa ", "firepower", "ftd", "nx-os", "nexus", "catalyst", "meraki", "anyconnect", "secure client", "iosxr", "ios xr"]},
+    "fortinet":   {"weight": 4, "terms": ["fortinet", "fortios", "fortigate", "fortiproxy", "fortimanager", "fortiweb", "fortiswitch", "fortiap", "fortinac"]},
+    "palo alto":  {"weight": 4, "terms": ["palo alto", "pan-os", "panos", "globalprotect", "panorama", "prisma access"]},
+    "ivanti":     {"weight": 4, "terms": ["ivanti", "connect secure", "pulse secure", "policy secure", "neurons for zta"]},
+    "citrix":     {"weight": 4, "terms": ["citrix", "netscaler", "adc gateway", "citrixbleed"]},
+    "juniper":    {"weight": 4, "terms": ["juniper", "junos", "srx", "mx series", "ex series", "mist"]},
+    "f5":         {"weight": 4, "terms": ["f5 ", "big-ip", "bigip", "big-iq", "nginx plus"]},
+    "sonicwall":  {"weight": 4, "terms": ["sonicwall", "sonicos", "sma 100", "sma100"]},
+    "check point":{"weight": 4, "terms": ["check point", "checkpoint", "gaia os", "quantum security gateway"]},
+    "sophos":     {"weight": 4, "terms": ["sophos", "sophos firewall", "sophos xg", "utm 9"]},
+    "watchguard": {"weight": 4, "terms": ["watchguard", "fireware"]},
+    "zyxel":      {"weight": 4, "terms": ["zyxel"]},
+    "mikrotik":   {"weight": 4, "terms": ["mikrotik", "routeros"]},
+    "netgear":    {"weight": 4, "terms": ["netgear", "nighthawk", "prosafe"]},
+    "tp-link":    {"weight": 4, "terms": ["tp-link", "tplink", "omada", "archer "]},
+    "d-link":     {"weight": 4, "terms": ["d-link", "dlink", "dir-"]},
+    "asus":       {"weight": 3, "terms": ["asus router", "asuswrt", "rt-ac", "rt-ax"]},
+    "huawei":     {"weight": 3, "terms": ["huawei", "hg8", "vrp"]},
+    "hpe aruba":  {"weight": 4, "terms": ["aruba", "arubaos", "hpe networking", "clearpass", "instant on"]},
+    "arista":     {"weight": 4, "terms": ["arista", "eos switch", "cloudvision"]},
+    "extreme":    {"weight": 4, "terms": ["extreme networks", "exos", "voss"]},
+    "ubiquiti":   {"weight": 4, "terms": ["ubiquiti", "unifi", "edgerouter", "edgeswitch"]},
+    "barracuda":  {"weight": 4, "terms": ["barracuda", "cloudgen"]},
+    "qnap-synology-edge": {"weight": 2, "terms": ["qnap", "synology", "asustor"]},
+    "vpn-gateways": {"weight": 4, "terms": ["array networks", "pulse connect", "openvpn access server", "wireguard", "strongswan", "libreswan"]},
+    "telco-core": {"weight": 3, "terms": ["nokia sr", "adtran", "dasan", "zte router", "calix", "draytek", "vigor "]}
+  },
+  "device_classes": {
+    "firewall":        {"weight": 3, "terms": ["firewall", "ngfw", "utm appliance", "security gateway", "next-generation firewall", "waf"]},
+    "vpn":             {"weight": 3, "terms": ["vpn", "ssl vpn", "ipsec", "remote access gateway", "zero trust gateway", "ztna"]},
+    "router":          {"weight": 3, "terms": ["router", "routers", "edge device", "cpe", "soho router", "bgp", "ospf"]},
+    "switch":          {"weight": 3, "terms": ["switch", "switches", "switching", "vlan", "stp ", "spanning tree", "poe switch"]},
+    "wireless":        {"weight": 3, "terms": ["wireless controller", "access point", "wlan", "wi-fi router", "wifi router", "wlc"]},
+    "load-balancer":   {"weight": 3, "terms": ["load balancer", "adc appliance", "application delivery controller", "reverse proxy appliance"]},
+    "sdwan":           {"weight": 3, "terms": ["sd-wan", "sdwan", "sase", "secure access service edge"]},
+    "mgmt-protocols":  {"weight": 2, "terms": ["snmp", "netconf", "tacacs", "radius", "ssh daemon", "telnet", "tftp", "smb of network device"]},
+    "ot-network":      {"weight": 2, "terms": ["industrial switch", "ics network", "scada gateway", "modbus gateway", "plc network"]}
+  },
+  "generic_terms": {
+    "weight": 1,
+    "terms": ["network appliance", "network infrastructure", "edge appliance", "perimeter device", "management interface", "network equipment", "gateway appliance"]
+  },
+  "urgency_terms": {
+    "actively exploited": 5, "in the wild": 4, "zero-day": 5, "0-day": 5,
+    "known exploited": 5, "kev": 3, "unauthenticated": 3, "pre-auth": 3,
+    "remote code execution": 4, "rce": 3, "authentication bypass": 4,
+    "command injection": 3, "backdoor": 4, "botnet": 2, "ransomware": 3,
+    "emergency directive": 5, "patch now": 3, "proof-of-concept": 2, "poc exploit": 3,
+    "end-of-life": 2, "end of support": 2, "no patch": 3, "unpatched": 3
+  },
+  "ai_terms": {
+    "weight": 3,
+    "terms": ["artificial intelligence", " ai ", "ai-powered", "ai powered", "ai-driven", "ai agent", "agentic",
+              "llm", "large language model", "genai", "generative ai", "machine learning", "deep learning",
+              "prompt injection", "ai-generated", "deepfake", "autonomous exploitation", "ai-assisted attack",
+              "copilot", "chatgpt", "claude", "model context protocol", "aiops"]
+  },
+  "exclude_terms": ["job posting", "webinar registration", "sponsored content", "black friday"],
+  "playbooks": {
+    "firewall": [
+      "Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.",
+      "Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.",
+      "Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.",
+      "After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.",
+      "Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages."
+    ],
+    "vpn": [
+      "Patch to the vendor's fixed build and run the vendor Integrity Checker Tool where one is offered.",
+      "Terminate all active sessions and revoke session tokens after upgrade; assume stolen session cookies.",
+      "Rotate certificates, service-account credentials and any secrets stored on the appliance.",
+      "Hunt for compromise: unexpected outbound connections, new local accounts, modified web resources, unusual timestamps in /var logs.",
+      "Enforce phishing-resistant MFA and geo/ASN conditional access on remote access portals."
+    ],
+    "router": [
+      "Upgrade firmware to the current fixed release; verify image integrity against the vendor hash before loading.",
+      "Disable WAN-side administration, UPnP, remote management and unused services (Telnet, TFTP, HTTP).",
+      "Replace default and reused credentials; enforce per-admin accounts with TACACS+/RADIUS and centralized logging.",
+      "For end-of-life models with no fix available, plan hardware replacement and isolate the device behind a supported firewall in the meantime.",
+      "Check for persistence: unexpected static routes, DNS server changes, port forwards, tunnels and firmware modifications."
+    ],
+    "switch": [
+      "Upgrade NOS to the fixed release; validate ISSU/hitless upgrade path for core and distribution switches first.",
+      "Restrict management plane with control-plane policing and management ACLs; move to out-of-band management.",
+      "Disable unused ports, set unused ports to an unrouted VLAN, and enforce 802.1X or MAC authentication on access ports.",
+      "Harden SNMP (v3 with auth+priv only, no public/private community strings) and disable legacy protocols.",
+      "Segment management, user, guest and OT traffic; verify VLAN ACLs and private VLAN enforcement."
+    ],
+    "wireless": [
+      "Patch controllers and access points; controller first, then staged AP upgrade.",
+      "Disable WPS, legacy WEP/TKIP and open SSIDs; enforce WPA3 (or WPA2-Enterprise) with 802.1X.",
+      "Isolate guest SSIDs into their own VLAN with no route to management or server networks.",
+      "Restrict controller management to the management VLAN and enforce MFA on the admin console."
+    ],
+    "load-balancer": [
+      "Apply the vendor hotfix to all units in the device group; verify config sync after upgrade.",
+      "Remove the management/TMUI/administrative interface from public exposure entirely.",
+      "Rotate device certificates, admin credentials and API tokens after patching.",
+      "Review iRules/policies and virtual server config for unauthorized changes."
+    ],
+    "sdwan": [
+      "Patch orchestrator/controller before edge devices; validate certificate trust after upgrade.",
+      "Restrict controller access to management networks and enforce MFA on the orchestrator.",
+      "Audit templates for insecure overrides pushed to edge devices.",
+      "Verify tunnel authentication and disable unused underlay transports."
+    ],
+    "generic": [
+      "Identify affected devices from your asset inventory, filtered by model and running version.",
+      "Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.",
+      "Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.",
+      "Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.",
+      "Record the decision (patched / mitigated / accepted risk) against the device group in the change record."
+    ],
+    "legacy": [
+      "Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.",
+      "Put compensating controls in place - strict ACLs, no direct management access, dedicated jump host, full session logging.",
+      "Set a replacement date and a budget owner; document the accepted risk until then.",
+      "Where the device cannot be replaced soon, monitor it as a high-risk asset (NetFlow baseline, alert on new outbound flows)."
+    ],
+    "ai": [
+      "Assume exploit development and mass scanning are faster than your historical patch SLA - shorten the window for internet-facing network devices to days, not months.",
+      "Treat any AI/LLM integration on network devices (assistants, AIOps, MCP or agent connectors) as a privileged admin path: scoped read-only credentials, no unattended config write, full audit trail.",
+      "Test AI-facing management surfaces for prompt injection from attacker-controlled data (device logs, hostnames, ticket text) before letting an agent act on them.",
+      "Use AI-assisted detection on your side too: baseline NetFlow/syslog and alert on deviation rather than relying on signature updates alone.",
+      "Harden against AI-enabled social engineering of the network team - callback verification for any out-of-band request to change firewall or VPN configuration."
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "at": "2026-09-17T19:44:49.642914+00:00",
+  "edition": "daily",
+  "stats": {
+    "feeds_ok": 19,
+    "feeds_failed": 0,
+    "raw": 700,
+    "fresh": 111,
+    "relevant": 88,
+    "digest": 70,
+    "watchlist": 18,
+    "skipped_old": 589,
+    "skipped_seen": 0
+  },
+  "analysis_mode": "rule-based",
+  "post": "docs/_posts/2026-09-17-network-security-digest.md"
+}

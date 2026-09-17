@@ -1,0 +1,116 @@
+name: Network Security Digest
+
+on:
+  schedule:
+    - cron: '0 6 * * *'    # daily full digest, 06:00 UTC
+    - cron: '15 * * * *'   # hourly watch - only opens a PR when something critical lands
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'daily (full digest) or hourly (urgent only)'
+        type: choice
+        options: [daily, hourly]
+        default: daily
+      hours:
+        description: 'Look-back window in hours'
+        default: '24'
+      dry_run:
+        description: 'Print the digest without opening a PR'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: digest-${{ github.event.schedule || inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Determine run mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "0 6 * * *" ]; then
+              echo "mode=daily"  >> "$GITHUB_OUTPUT"
+              echo "hours=24"    >> "$GITHUB_OUTPUT"
+              echo "min_crit=0"  >> "$GITHUB_OUTPUT"
+            else
+              echo "mode=hourly" >> "$GITHUB_OUTPUT"
+              echo "hours=3"     >> "$GITHUB_OUTPUT"
+              echo "min_crit=1"  >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "mode=${{ inputs.mode }}"   >> "$GITHUB_OUTPUT"
+            echo "hours=${{ inputs.hours }}" >> "$GITHUB_OUTPUT"
+            echo "min_crit=0"                >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build digest
+        id: build
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DIGEST_MODEL: ${{ vars.DIGEST_MODEL || 'claude-opus-5' }}
+          DIGEST_EFFORT: ${{ vars.DIGEST_EFFORT || 'high' }}
+          DIGEST_MAX_ITEMS: ${{ vars.DIGEST_MAX_ITEMS || '25' }}
+        run: |
+          set +e
+          python collector/run.py \
+            --hours "${{ steps.mode.outputs.hours }}" \
+            --edition "${{ steps.mode.outputs.mode }}" \
+            --min-critical "${{ steps.mode.outputs.min_crit }}" \
+            ${{ inputs.dry_run == true && '--dry-run' || '' }}
+          code=$?
+          set -e
+          if [ "$code" -eq 78 ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing urgent in this window - no PR."
+            exit 0
+          fi
+          if [ "$code" -ne 0 ]; then exit "$code"; fi
+          echo "publish=${{ inputs.dry_run == true && 'false' || 'true' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Open review PR
+        if: steps.build.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="digest/$(date -u +%Y-%m-%d-%H%M)-${{ steps.mode.outputs.mode }}"
+          git config user.name  "netsec-digest-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add docs/_posts data/seen.json data/last_run.json
+          git commit -m "digest: ${{ steps.mode.outputs.mode }} network device security digest $(date -u +%Y-%m-%d)"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "Digest (${{ steps.mode.outputs.mode }}): network device security — $(date -u +%Y-%m-%d)" \
+            --body-file digest_summary.txt \
+            --label digest --label "needs-review" \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "$BRANCH"
+
+      - name: Upload digest artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ steps.mode.outputs.mode }}-${{ github.run_id }}
+          path: |
+            docs/_posts/
+            digest_summary.txt
+          if-no-files-found: ignore
+          retention-days: 14

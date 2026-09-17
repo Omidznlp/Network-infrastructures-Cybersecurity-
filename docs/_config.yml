@@ -1,0 +1,13 @@
+title: Network Infrastructure Cybersecurity
+description: >-
+  Daily security intelligence for network devices — firewalls, VPN gateways, routers,
+  switches, wireless controllers and load balancers. Filtered, triaged and turned into
+  concrete upgrade and hardening actions.
+theme: jekyll-theme-minimal
+show_downloads: false
+markdown: kramdown
+permalink: /:year/:month/:day/:title/
+defaults:
+  - scope: {path: "", type: "posts"}
+    values: {layout: "post"}
+exclude: [README.md]

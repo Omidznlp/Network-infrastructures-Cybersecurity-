@@ -46,11 +46,39 @@ def log(msg: str) -> None:
     print(f"[collect] {msg}", file=sys.stderr)
 
 
-def http_get(url: str, timeout: int = 25) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
+BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+
+
+def http_get(url: str, timeout: int = 25, agent: str | None = None) -> bytes:
+    """Fetch a URL, retrying once with a browser User-Agent.
+
+    Some publishers (cisa.gov's advisory feed among them) answer 403/406 to a
+    non-browser agent when the request comes from a datacenter IP such as a
+    GitHub Actions runner.
+    """
     ctx = ssl.create_default_context()
-    with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
-        return resp.read()
+    agents = [agent or UA]
+    if agents[0] != BROWSER_UA:
+        agents.append(BROWSER_UA)
+    last: Exception | None = None
+    for ua in agents:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": ua,
+            "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, application/json, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+        try:
+            with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as exc:
+            last = exc
+            if exc.code not in (401, 403, 406, 429):
+                raise
+        except Exception as exc:
+            last = exc
+            raise
+    raise last if last else RuntimeError("fetch failed")
 
 
 def clean(text: str, limit: int = 900) -> str:
@@ -240,7 +268,7 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
         if not feed.get("enabled", True):
             continue
         try:
-            body = http_get(feed["url"])
+            body = http_get(feed["url"], agent=feed.get("user_agent"))
         except Exception as exc:
             stats["feeds_failed"] += 1
             log(f"{feed['name']}: fetch failed ({exc})")

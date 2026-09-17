@@ -1,0 +1,119 @@
+{
+  "type": "object",
+  "properties": {
+    "headline": {
+      "type": "object",
+      "description": "The AI-and-network-devices lead story for this edition.",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string",
+          "description": "2-4 paragraphs on how AI is being used to attack or defend network devices this cycle, grounded in the supplied items. If no item touches AI, explain the week's dominant network-device risk pattern through an AI lens without inventing incidents."
+        },
+        "prevention_modern": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prevention_legacy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "body",
+        "prevention_modern",
+        "prevention_legacy"
+      ],
+      "additionalProperties": false
+    },
+    "executive_summary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "3-6 bullets: what changed for the network team today."
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "index of the input item"
+          },
+          "relevance": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "watch",
+              "drop"
+            ]
+          },
+          "device_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affected": {
+            "type": "string",
+            "description": "Vendor/product/versions exactly as stated in the source."
+          },
+          "what_happened": {
+            "type": "string"
+          },
+          "why_it_matters": {
+            "type": "string"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ordered, concrete remediation steps."
+          },
+          "legacy_advice": {
+            "type": "string"
+          },
+          "detection": {
+            "type": "string",
+            "description": "What to hunt for in logs/flows, or empty string."
+          },
+          "ai_angle": {
+            "type": "string",
+            "description": "AI relevance, or empty string."
+          }
+        },
+        "required": [
+          "id",
+          "relevance",
+          "device_types",
+          "affected",
+          "what_happened",
+          "why_it_matters",
+          "actions",
+          "legacy_advice",
+          "detection",
+          "ai_angle"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "headline",
+    "executive_summary",
+    "items"
+  ],
+  "additionalProperties": false
+}

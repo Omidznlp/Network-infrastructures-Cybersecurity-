@@ -4,3 +4,5 @@ digest_summary.txt
 _site/
 .jekyll-cache/
 .venv/
+data/collected.json
+data/analysis.json

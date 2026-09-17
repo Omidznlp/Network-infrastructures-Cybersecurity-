@@ -37,49 +37,7 @@ Rules:
 - Always give separate advice for legacy/end-of-life gear that cannot be patched.
 - Be terse. No marketing language, no filler."""
 
-SCHEMA = {
-    "type": "object",
-    "properties": {
-        "headline": {
-            "type": "object",
-            "description": "The AI-and-network-devices lead story for this edition.",
-            "properties": {
-                "title": {"type": "string"},
-                "body": {"type": "string", "description": "2-4 paragraphs on how AI is being used to attack or defend network devices this cycle, grounded in the supplied items. If no item touches AI, explain the week's dominant network-device risk pattern through an AI lens without inventing incidents."},
-                "prevention_modern": {"type": "array", "items": {"type": "string"}},
-                "prevention_legacy": {"type": "array", "items": {"type": "string"}},
-            },
-            "required": ["title", "body", "prevention_modern", "prevention_legacy"],
-            "additionalProperties": False,
-        },
-        "executive_summary": {"type": "array", "items": {"type": "string"},
-                              "description": "3-6 bullets: what changed for the network team today."},
-        "items": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "id": {"type": "integer", "description": "index of the input item"},
-                    "relevance": {"type": "string", "enum": ["critical", "high", "medium", "watch", "drop"]},
-                    "device_types": {"type": "array", "items": {"type": "string"}},
-                    "affected": {"type": "string", "description": "Vendor/product/versions exactly as stated in the source."},
-                    "what_happened": {"type": "string"},
-                    "why_it_matters": {"type": "string"},
-                    "actions": {"type": "array", "items": {"type": "string"},
-                                 "description": "Ordered, concrete remediation steps."},
-                    "legacy_advice": {"type": "string"},
-                    "detection": {"type": "string", "description": "What to hunt for in logs/flows, or empty string."},
-                    "ai_angle": {"type": "string", "description": "AI relevance, or empty string."},
-                },
-                "required": ["id", "relevance", "device_types", "affected", "what_happened",
-                             "why_it_matters", "actions", "legacy_advice", "detection", "ai_angle"],
-                "additionalProperties": False,
-            },
-        },
-    },
-    "required": ["headline", "executive_summary", "items"],
-    "additionalProperties": False,
-}
+SCHEMA = json.loads((ROOT / "config" / "analysis_schema.json").read_text())
 
 
 def log(msg: str) -> None:
@@ -216,3 +174,56 @@ def analyze(payload: dict) -> dict:
 
 if __name__ == "__main__":
     print(json.dumps(analyze(json.load(sys.stdin)), indent=2))
+
+
+REQUIRED_ITEM_KEYS = set(SCHEMA["properties"]["items"]["items"]["required"])
+RELEVANCE = set(SCHEMA["properties"]["items"]["items"]["properties"]["relevance"]["enum"])
+
+
+def validate(result: object, item_count: int) -> dict:
+    """Validate an analysis produced outside this process (e.g. by the Claude Code Action).
+
+    Raises ValueError with a specific reason; callers fall back to rule-based advice.
+    """
+    if not isinstance(result, dict):
+        raise ValueError("analysis is not a JSON object")
+    head = result.get("headline")
+    if not isinstance(head, dict):
+        raise ValueError("missing headline object")
+    for key in ("title", "body", "prevention_modern", "prevention_legacy"):
+        if key not in head:
+            raise ValueError(f"headline missing '{key}'")
+    if not isinstance(result.get("executive_summary"), list):
+        raise ValueError("executive_summary must be a list")
+    items = result.get("items")
+    if not isinstance(items, list):
+        raise ValueError("items must be a list")
+    for pos, item in enumerate(items):
+        if not isinstance(item, dict):
+            raise ValueError(f"item {pos} is not an object")
+        missing = REQUIRED_ITEM_KEYS - set(item)
+        if missing:
+            raise ValueError(f"item {pos} missing {sorted(missing)}")
+        if item["relevance"] not in RELEVANCE:
+            raise ValueError(f"item {pos} has invalid relevance {item['relevance']!r}")
+        if not isinstance(item["id"], int) or not 0 <= item["id"] < item_count:
+            raise ValueError(f"item {pos} has out-of-range id {item['id']!r}")
+        if not isinstance(item["actions"], list):
+            raise ValueError(f"item {pos} actions must be a list")
+    return result
+
+
+def load_external(path: Path, payload: dict) -> dict:
+    """Load an analysis file written by the agent, falling back to rules if it is unusable."""
+    try:
+        result = validate(json.loads(path.read_text()), len(payload["items"][:MAX_ITEMS]))
+        result.setdefault("analysis_mode", "claude-code-action")
+        log(f"external analysis accepted: {len(result['items'])} items")
+        return result
+    except FileNotFoundError:
+        log(f"{path} not found - falling back to rules")
+    except (ValueError, json.JSONDecodeError) as exc:
+        log(f"external analysis rejected ({exc}) - falling back to rules")
+    out = rule_based(payload)
+    out["analysis_mode"] = "rule-based (agent output unusable)"
+    return out

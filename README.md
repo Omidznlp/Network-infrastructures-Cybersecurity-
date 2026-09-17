@@ -22,10 +22,14 @@ publishes the edition to the GitHub Pages site.
         │               → score for network-device relevance → extract CVEs
         │               → enrich with CISA KEV + FIRST EPSS
         ▼
- collector/analyze.py   Claude (claude-opus-5) triages each item and writes the advice:
-        │               severity, affected devices, actions, legacy guidance, detection,
-        │               AI angle + the AI headline. Structured JSON output, schema-enforced.
-        │               No API key? → deterministic rule-based playbooks instead.
+ Claude analysis        in CI: the Claude Code Action reads data/collected.json and writes
+        │               data/analysis.json (authenticated by your subscription token).
+        │               locally: collector/analyze.py calls the API directly with a
+        │               schema-enforced structured output.
+        │               Either way the result is validated against
+        │               config/analysis_schema.json before rendering, and anything
+        │               malformed degrades to the rule-based playbooks rather than
+        │               producing a broken digest.
         ▼
  collector/render.py    writes docs/_posts/YYYY-MM-DD-network-security-digest.md
         │
@@ -53,8 +57,14 @@ option that prints the digest without opening a PR.
 ## Setup
 
 1. **Push this scaffold** to the repo (see below).
-2. **Add the API key**: repo → Settings → Secrets and variables → Actions → New repository
-   secret → `ANTHROPIC_API_KEY`. Without it the pipeline still runs, using rule-based advice.
+2. **Add an authentication secret** (repo → Settings → Secrets and variables → Actions). Either:
+   - `CLAUDE_CODE_OAUTH_TOKEN` — uses a Claude **Pro/Max/Team/Enterprise subscription**, no
+     separate API bill. Generate it locally with `claude setup-token`. This is what this repo
+     is configured for.
+   - `ANTHROPIC_API_KEY` — a Claude API key, billed as API usage separately from any
+     subscription. Used by the local `collector/run.py` path and as a fallback in CI.
+
+   With neither, the pipeline still runs and falls back to rule-based advice.
 3. **Allow PRs from Actions**: Settings → Actions → General → Workflow permissions →
    check *"Allow GitHub Actions to create and approve pull requests"*.
 4. **Labels** (optional but the workflow uses them): create `digest` and `needs-review`.

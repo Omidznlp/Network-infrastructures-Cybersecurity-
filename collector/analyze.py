@@ -11,8 +11,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-MODEL = os.environ.get("DIGEST_MODEL", "claude-opus-5")
-MAX_ITEMS = int(os.environ.get("DIGEST_MAX_ITEMS", "25"))
+def env(name: str, default: str) -> str:
+    """Unset GitHub Actions variables arrive as empty strings, not as absent keys."""
+    return os.environ.get(name) or default
+
+
+MODEL = env("DIGEST_MODEL", "claude-opus-5")
+MAX_ITEMS = int(env("DIGEST_MAX_ITEMS", "25"))
 
 SYSTEM = """You are the network-infrastructure security analyst for an enterprise network team \
 that runs firewalls, VPN gateways, routers, switches, wireless controllers and load balancers \
@@ -173,7 +178,7 @@ def with_claude(payload: dict) -> dict:
         system=SYSTEM,
         thinking={"type": "adaptive"},
         output_config={
-            "effort": os.environ.get("DIGEST_EFFORT", "high"),
+            "effort": env("DIGEST_EFFORT", "high"),
             "format": {"type": "json_schema", "schema": SCHEMA},
         },
         messages=[{"role": "user", "content": build_prompt(payload)}],

@@ -1,17 +1,17 @@
 {
-  "at": "2026-09-17T20:31:24.245521+00:00",
+  "at": "2026-09-17T22:11:22.779552+00:00",
   "edition": "daily",
   "stats": {
     "feeds_ok": 18,
     "feeds_failed": 1,
     "raw": 670,
-    "fresh": 146,
-    "relevant": 106,
-    "digest": 80,
-    "watchlist": 26,
-    "skipped_old": 525,
-    "skipped_seen": 0
+    "fresh": 72,
+    "relevant": 29,
+    "digest": 20,
+    "watchlist": 9,
+    "skipped_old": 524,
+    "skipped_seen": 75
   },
-  "analysis_mode": "rule-based",
+  "analysis_mode": "rule-based (agent output unusable)",
   "post": "docs/_posts/2026-09-17-network-security-digest.md"
 }

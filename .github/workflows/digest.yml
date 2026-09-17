@@ -82,10 +82,14 @@ jobs:
         continue-on-error: true   # a failed analysis degrades to rule-based, never blocks the digest
         uses: anthropics/claude-code-action@v1
         with:
+          # Pass ONE credential only. An absent secret arrives as an empty string, and an
+          # empty anthropic_api_key takes precedence over the OAuth token, which fails auth
+          # instantly (is_error, num_turns 1, no model usage). To switch to an API key,
+          # replace the line below with anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: '--allowedTools "Read,Write" --max-turns 30'
+          claude_args: '--allowedTools "Read,Write" --max-turns 30 --model claude-opus-5'
+          show_full_output: true
           prompt: |
             You are the network-infrastructure security analyst for this repository. Its readers
             are network and security engineers running firewalls, VPN gateways, routers, switches,

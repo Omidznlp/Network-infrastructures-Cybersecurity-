@@ -337,7 +337,9 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
         fresh.append(item)
 
     scored = [score_item(i, kw) for i in fresh]
-    relevant = [i for i in scored if i.score >= kw["watchlist_score"]]
+    on_topic = [i for i in scored if i.vendors or i.categories or i.tier == "psirt"]
+    log(f"dropped {len(scored) - len(on_topic)} items with no network-device or vendor match")
+    relevant = [i for i in on_topic if i.score >= kw["min_score"]]
 
     all_cves = sorted({c for i in relevant for c in i.cves})
     epss = load_epss(all_cves, enr["epss_url"]) if enr.get("enable_epss") and all_cves else {}
@@ -357,8 +359,7 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
             item.tags.append("vendor-advisory")
 
     relevant.sort(key=lambda i: (i.score, i.published), reverse=True)
-    digest = [i for i in relevant if i.score >= kw["min_score"]]
-    watchlist = [i for i in relevant if i.score < kw["min_score"]]
+    digest = relevant
 
     now = datetime.now(timezone.utc)
     if persist:
@@ -367,8 +368,8 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
         seen_path.parent.mkdir(parents=True, exist_ok=True)
         seen_path.write_text(json.dumps(seen, indent=0, sort_keys=True))
 
-    stats.update({"fresh": len(fresh), "relevant": len(relevant), "digest": len(digest),
-                  "watchlist": len(watchlist), "skipped_old": skipped_old, "skipped_seen": skipped_seen})
+    stats.update({"fresh": len(fresh), "on_topic": len(on_topic), "digest": len(digest),
+                  "skipped_old": skipped_old, "skipped_seen": skipped_seen})
     log(json.dumps(stats))
 
     return {
@@ -377,7 +378,6 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
         "stats": stats,
         "kev_context": {c: kev[c] for c in all_cves if c in kev},
         "items": [asdict(i) for i in digest],
-        "watchlist": [asdict(i) for i in watchlist],
     }
 
 

@@ -61,20 +61,27 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
         "",
         "---",
         "",
-        f"## 🧠 Headline — {head['title']}",
-        "",
-        head["body"],
-        "",
-        "**Preventing it on current systems**",
-        "",
-        bullets(head.get("prevention_modern", [])),
-        "",
-        "**Preventing it on legacy / end-of-life systems**",
-        "",
-        bullets(head.get("prevention_legacy", [])),
-        "",
-        "---",
-        "",
+    ]
+
+    if kept:
+        out += [
+            f"## 🧠 Headline — {head['title']}",
+            "",
+            head["body"],
+            "",
+            "**Preventing it on current systems**",
+            "",
+            bullets(head.get("prevention_modern", [])),
+            "",
+            "**Preventing it on legacy / end-of-life systems**",
+            "",
+            bullets(head.get("prevention_legacy", [])),
+            "",
+            "---",
+            "",
+        ]
+
+    out += [
         "## Executive summary",
         "",
         bullets(analysis.get("executive_summary", [])),
@@ -87,7 +94,10 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
 
     out += ["---", "", "## Items", ""]
     if not kept:
-        out += ["_Nothing cleared the relevance threshold in this window._", ""]
+        out += ["**No network device security news in this window.**", "",
+                "No advisory or report in the sources touched firewalls, VPN gateways, routers, "
+                "switches, wireless controllers, load balancers or SD-WAN edge devices. "
+                "Unrelated security news is deliberately not shown here.", ""]
 
     for analysed in kept:
         src = items_in[analysed["id"]] if analysed["id"] < len(items_in) else {}
@@ -129,18 +139,31 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
             out += [f"**AI angle.** {analysed['ai_angle']}", ""]
         out += ["---", ""]
 
-    watch = collected.get("watchlist", [])[:10]
-    if watch:
-        out += ["## Watchlist (low confidence, not yet triaged)", ""]
-        out += [f"- [{w['title']}]({tidy_url(w['link'])}) — *{w['source']}*" for w in watch]
-        out += [""]
+    index = {
+        "url": f"/{date:%Y/%m/%d}/network-security-digest/",
+        "date": f"{date:%Y-%m-%d}",
+        "entries": [
+            {
+                "title": items_in[a["id"]]["title"],
+                "link": tidy_url(items_in[a["id"]]["link"]),
+                "source": items_in[a["id"]]["source"],
+                "relevance": a["relevance"],
+                "device_types": a["device_types"] or items_in[a["id"]]["categories"],
+                "vendors": items_in[a["id"]]["vendors"],
+                "cves": items_in[a["id"]]["cves"],
+                "kev": bool(items_in[a["id"]]["kev"]),
+            }
+            for a in kept if a["id"] < len(items_in)
+        ],
+    }
+    out += ["<!--index", json.dumps(index, indent=1), "-->", ""]
 
     out += [
         "## How this was produced",
         "",
         f"- Feeds polled: {collected['stats']['feeds_ok']} ok, {collected['stats']['feeds_failed']} failed",
         f"- Raw items: {collected['stats']['raw']} → in window: {collected['stats']['fresh']} → "
-        f"network-device relevant: {collected['stats']['relevant']} → published: {len(kept)}",
+        f"network-device relevant: {collected['stats'].get('on_topic', 0)} → published: {len(kept)}",
         f"- Enrichment: CISA KEV, FIRST EPSS",
         f"- Analysis: `{analysis.get('analysis_mode', 'unknown')}`",
         "",

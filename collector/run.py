@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import analyze as analyzer  # noqa: E402
 import collect as collector  # noqa: E402
+import index_site  # noqa: E402
 import render as renderer  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -92,6 +93,7 @@ def main() -> int:
         "analysis_mode": analysis.get("analysis_mode"),
         "post": str(path.relative_to(ROOT)),
     }, indent=2))
+    index_site.build()
     Path("digest_summary.txt").write_text(summary_body(collected, analysis, args.edition))
     print(f"[run] wrote {path}")
     return 0

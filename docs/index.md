@@ -17,6 +17,15 @@ Full source list: [SOURCES.md](https://github.com/Omidznlp/Network-infrastructur
 
 ---
 
+## Browse by device type and vendor
+
+Looking for one platform rather than one day? **[Browse the archive]({{ '/browse/' | relative_url }})**
+— pick a device class (firewalls, VPN gateways, routers, switches, wireless, load balancers,
+SD-WAN) and drill into the vendor, or jump straight to a vendor and see every device class it
+appears under.
+
+---
+
 ## Editions
 
 <ul>

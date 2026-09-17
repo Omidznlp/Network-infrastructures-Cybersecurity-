@@ -1,17 +1,12 @@
 ---
 layout: default
-title: "Firewalls"
-permalink: /browse/device/firewall/
+title: "Firewall Management Platform"
+permalink: /browse/device/firewall-management-platform/
 ---
 
-# Firewalls
+# Firewall Management Platform
 
-*2 item(s) across all editions.*
-
-## (Vendor Not Identified)
-
-- 🟠 [Securing the unpatchable in an age of AI-driven vulnerabilities](https://blog.talosintelligence.com/securing-the-unpatchable-in-an-age-of-ai-driven-vulnerabilities/)  
-  <small>2026-09-17 · Cisco Talos · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
+*1 item(s) across all editions.*
 
 ## Cisco
 

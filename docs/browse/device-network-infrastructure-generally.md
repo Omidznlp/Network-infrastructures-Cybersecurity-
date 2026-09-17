@@ -1,22 +1,17 @@
 ---
 layout: default
-title: "Firewalls"
-permalink: /browse/device/firewall/
+title: "Network Infrastructure Generally"
+permalink: /browse/device/network-infrastructure-generally/
 ---
 
-# Firewalls
+# Network Infrastructure Generally
 
-*2 item(s) across all editions.*
+*1 item(s) across all editions.*
 
 ## (Vendor Not Identified)
 
 - 🟠 [Securing the unpatchable in an age of AI-driven vulnerabilities](https://blog.talosintelligence.com/securing-the-unpatchable-in-an-age-of-ai-driven-vulnerabilities/)  
   <small>2026-09-17 · Cisco Talos · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-
-## Cisco
-
-- 🟠 [ZDI-26-709: Cisco Secure Firewall Management Center CommandSinkRmi Deserialization of Untrusted Data Remote Code Execution Vulnerability](http://www.zerodayinitiative.com/advisories/ZDI-26-709/) — CVE-2026-20242  
-  <small>2026-09-17 · Zero Day Initiative · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
 
 
 <p><a href="{{ "/" | relative_url }}">← All editions</a> · <a href="{{ "/browse/" | relative_url }}">Browse index</a></p>

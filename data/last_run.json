@@ -1,16 +1,16 @@
 {
-  "at": "2026-09-17T22:16:05.505222+00:00",
+  "at": "2026-09-17T22:35:51.724865+00:00",
   "edition": "daily",
   "stats": {
-    "feeds_ok": 19,
-    "feeds_failed": 0,
-    "raw": 700,
-    "fresh": 111,
-    "on_topic": 56,
-    "digest": 56,
-    "skipped_old": 589,
-    "skipped_seen": 0
+    "feeds_ok": 18,
+    "feeds_failed": 1,
+    "raw": 670,
+    "fresh": 100,
+    "on_topic": 8,
+    "digest": 7,
+    "skipped_old": 524,
+    "skipped_seen": 47
   },
-  "analysis_mode": "rule-based",
+  "analysis_mode": "claude-code-action",
   "post": "docs/_posts/2026-09-17-network-security-digest.md"
 }

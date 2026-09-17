@@ -64,7 +64,8 @@ def main() -> int:
     ]
     for a in kept[:8]:
         src = collected["items"][a["id"]]
-        body.append(f"- **{a['relevance'].upper()}** — [{src['title']}]({src['link']})")
+        body.append(f"- **{a['relevance'].upper()}** — "
+                    f"[{src['title']}]({renderer.tidy_url(src['link'])})")
     body += ["", "Review the digest file, then merge to publish it to the site."]
     Path("digest_summary.txt").write_text("\n".join(body))
     print(f"[run] wrote {path}")

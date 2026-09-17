@@ -14,6 +14,11 @@ BADGE = {"critical": "🔴 CRITICAL", "high": "🟠 HIGH", "medium": "🟡 MEDIU
 ORDER = {"critical": 0, "high": 1, "medium": 2, "watch": 3}
 
 
+def tidy_url(url: str) -> str:
+    """Strip feed tracking query strings (Cisco's vs_f=/vs_cat= etc.) for readable links."""
+    return re.sub(r"[?&](vs_[a-z]+|utm_[a-z]+|source)=[^&]*", "", url or "").rstrip("?&")
+
+
 def esc(text: str) -> str:
     return (text or "").replace('"', "'").strip()
 
@@ -92,7 +97,7 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
             f"### {badge} — {src.get('title', 'Untitled')}",
             "",
             f"*{src.get('source', '?')} · {src.get('published', '')[:10]} · "
-            f"[source]({src.get('link', '#')})* {tags}",
+            f"[source]({tidy_url(src.get('link', '#'))})* {tags}",
             "",
             f"**Affected:** {analysed['affected']}  ",
             f"**Device types:** {', '.join(analysed['device_types']) or 'n/a'}  ",
@@ -127,7 +132,7 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
     watch = collected.get("watchlist", [])[:10]
     if watch:
         out += ["## Watchlist (low confidence, not yet triaged)", ""]
-        out += [f"- [{w['title']}]({w['link']}) — *{w['source']}*" for w in watch]
+        out += [f"- [{w['title']}]({tidy_url(w['link'])}) — *{w['source']}*" for w in watch]
         out += [""]
 
     out += [

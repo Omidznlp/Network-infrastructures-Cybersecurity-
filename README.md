@@ -54,8 +54,10 @@ option that prints the digest without opening a PR.
 3. **Allow PRs from Actions**: Settings → Actions → General → Workflow permissions →
    check *"Allow GitHub Actions to create and approve pull requests"*.
 4. **Labels** (optional but the workflow uses them): create `digest` and `needs-review`.
-5. **Pages**: Settings → Pages → Source: *GitHub Actions*. Note that Pages on a **private**
-   repo needs a paid plan; on a public repo it is free.
+5. **Pages**: Settings → Pages → Source: *GitHub Actions*, then add repository **variable**
+   `PAGES_ENABLED=true`. Until that variable is set the publish workflow is a deliberate no-op,
+   so it cannot fail while Pages is off. Pages on a **private** repo needs a paid plan; on a
+   public repo it is free.
 6. **Branch protection** (recommended before going public): Settings → Rules → require a pull
    request before merging to `main`, so no edition can publish without your review.
 
@@ -75,7 +77,11 @@ Drop `--dry-run` to write the post into `docs/_posts/`.
 ## Tuning what gets in
 
 - `config/sources.json` — feeds. Add, remove, or flip `enabled`. A dead feed is logged and
-  skipped, never fatal.
+  skipped, never fatal. Per-feed `user_agent` overrides the default agent.
+  *Known issue:* `cisa.gov`'s advisories RSS returns 403 to GitHub Actions runner IPs. Its KEV
+  JSON is reachable, so newly added KEV entries are ingested as items instead — that is the more
+  actionable half anyway (confirmed exploitation + the mandated remediation date). The feed works
+  from a local run.
 - `config/keywords.json` — the filter. `vendors` and `device_classes` carry the weight;
   an item needs `min_score` (default 4) to reach the digest and `watchlist_score` (2) to reach
   the watchlist. Raise `min_score` for less noise, lower it for wider coverage.

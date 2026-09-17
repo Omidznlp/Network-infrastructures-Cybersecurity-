@@ -2,8 +2,7 @@ name: Network Security Digest
 
 on:
   schedule:
-    - cron: '0 6 * * *'
-    - cron: '15 * * * *'
+    - cron: '0 6 * * *'   # daily digest, 06:00 UTC (the only scheduled run)
   workflow_dispatch:
     inputs:
       mode:
@@ -50,11 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = "schedule" ]; then
-            if [ "$SCHEDULE" = "0 6 * * *" ]; then
-              MODE=daily; HOURS=24; MIN_CRIT=0
-            else
-              MODE=hourly; HOURS=3; MIN_CRIT=1
-            fi
+            MODE=daily; HOURS=24; MIN_CRIT=0
           else
             MODE="${INPUT_MODE:-daily}"; HOURS="${INPUT_HOURS:-24}"; MIN_CRIT=0
           fi

@@ -41,7 +41,11 @@ publishes the edition to the GitHub Pages site.
 | Run | Schedule | Window | Opens a PR |
 |---|---|---|---|
 | **Daily digest** | 06:00 UTC | last 24h | always |
-| **Hourly watch** | every hour at :15 | last 3h | only when a **critical** item appears |
+| **Hourly watch** | manual dispatch only | last 3h | only when a **critical** item appears |
+
+The hourly watch is no longer scheduled - run it by hand from the Actions tab when a
+major advisory is breaking and you want an off-cycle check. To put it back on a schedule,
+add `- cron: '15 * * * *'` under `on.schedule` in `.github/workflows/digest.yml`.
 
 Both are also runnable by hand from the **Actions** tab (`workflow_dispatch`), with a `dry_run`
 option that prints the digest without opening a PR.

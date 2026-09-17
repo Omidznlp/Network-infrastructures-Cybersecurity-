@@ -2,17 +2,20 @@ name: Network Security Digest
 
 on:
   schedule:
-    - cron: '0 6 * * *'    # daily full digest, 06:00 UTC
-    - cron: '15 * * * *'   # hourly watch - only opens a PR when something critical lands
+    - cron: '0 6 * * *'
+    - cron: '15 * * * *'
   workflow_dispatch:
     inputs:
       mode:
         description: 'daily (full digest) or hourly (urgent only)'
         type: choice
-        options: [daily, hourly]
+        options:
+          - daily
+          - hourly
         default: daily
       hours:
         description: 'Look-back window in hours'
+        type: string
         default: '24'
       dry_run:
         description: 'Print the digest without opening a PR'
@@ -22,10 +25,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-
-concurrency:
-  group: digest-${{ github.event.schedule || inputs.mode }}
-  cancel-in-progress: false
 
 jobs:
   digest:
@@ -43,72 +42,88 @@ jobs:
 
       - name: Determine run mode
         id: mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_HOURS: ${{ inputs.hours }}
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ github.event.schedule }}" = "0 6 * * *" ]; then
-              echo "mode=daily"  >> "$GITHUB_OUTPUT"
-              echo "hours=24"    >> "$GITHUB_OUTPUT"
-              echo "min_crit=0"  >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            if [ "$SCHEDULE" = "0 6 * * *" ]; then
+              MODE=daily; HOURS=24; MIN_CRIT=0
             else
-              echo "mode=hourly" >> "$GITHUB_OUTPUT"
-              echo "hours=3"     >> "$GITHUB_OUTPUT"
-              echo "min_crit=1"  >> "$GITHUB_OUTPUT"
+              MODE=hourly; HOURS=3; MIN_CRIT=1
             fi
           else
-            echo "mode=${{ inputs.mode }}"   >> "$GITHUB_OUTPUT"
-            echo "hours=${{ inputs.hours }}" >> "$GITHUB_OUTPUT"
-            echo "min_crit=0"                >> "$GITHUB_OUTPUT"
+            MODE="${INPUT_MODE:-daily}"; HOURS="${INPUT_HOURS:-24}"; MIN_CRIT=0
           fi
+          {
+            echo "mode=$MODE"
+            echo "hours=$HOURS"
+            echo "min_crit=$MIN_CRIT"
+          } >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE hours=$HOURS min_critical=$MIN_CRIT"
 
       - name: Build digest
         id: build
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DIGEST_MODEL: ${{ vars.DIGEST_MODEL || 'claude-opus-5' }}
-          DIGEST_EFFORT: ${{ vars.DIGEST_EFFORT || 'high' }}
-          DIGEST_MAX_ITEMS: ${{ vars.DIGEST_MAX_ITEMS || '25' }}
+          DIGEST_MODEL: ${{ vars.DIGEST_MODEL }}
+          DIGEST_EFFORT: ${{ vars.DIGEST_EFFORT }}
+          DIGEST_MAX_ITEMS: ${{ vars.DIGEST_MAX_ITEMS }}
+          MODE: ${{ steps.mode.outputs.mode }}
+          HOURS: ${{ steps.mode.outputs.hours }}
+          MIN_CRIT: ${{ steps.mode.outputs.min_crit }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          set +e
-          python collector/run.py \
-            --hours "${{ steps.mode.outputs.hours }}" \
-            --edition "${{ steps.mode.outputs.mode }}" \
-            --min-critical "${{ steps.mode.outputs.min_crit }}" \
-            ${{ inputs.dry_run == true && '--dry-run' || '' }}
+          set -uo pipefail
+          ARGS=(--hours "$HOURS" --edition "$MODE" --min-critical "$MIN_CRIT")
+          if [ "${DRY_RUN:-false}" = "true" ]; then ARGS+=(--dry-run); fi
+          python collector/run.py "${ARGS[@]}"
           code=$?
-          set -e
           if [ "$code" -eq 78 ]; then
             echo "publish=false" >> "$GITHUB_OUTPUT"
-            echo "Nothing urgent in this window - no PR."
+            echo "::notice::Nothing urgent in this window - no PR opened."
             exit 0
           fi
           if [ "$code" -ne 0 ]; then exit "$code"; fi
-          echo "publish=${{ inputs.dry_run == true && 'false' || 'true' }}" >> "$GITHUB_OUTPUT"
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Open review PR
         if: steps.build.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODE: ${{ steps.mode.outputs.mode }}
+          BASE: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
-          BRANCH="digest/$(date -u +%Y-%m-%d-%H%M)-${{ steps.mode.outputs.mode }}"
-          git config user.name  "netsec-digest-bot"
+          STAMP="$(date -u +%Y-%m-%d-%H%M)"
+          DAY="$(date -u +%Y-%m-%d)"
+          BRANCH="digest/$STAMP-$MODE"
+          git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add docs/_posts data/seen.json data/last_run.json
-          git commit -m "digest: ${{ steps.mode.outputs.mode }} network device security digest $(date -u +%Y-%m-%d)"
+          git commit -m "digest($MODE): network device security digest $DAY"
           git push -u origin "$BRANCH"
           gh pr create \
-            --title "Digest (${{ steps.mode.outputs.mode }}): network device security — $(date -u +%Y-%m-%d)" \
+            --title "Digest ($MODE): network device security - $DAY" \
             --body-file digest_summary.txt \
-            --label digest --label "needs-review" \
-            --base "${{ github.event.repository.default_branch }}" \
+            --label digest \
+            --label needs-review \
+            --base "$BASE" \
             --head "$BRANCH"
 
       - name: Upload digest artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: digest-${{ steps.mode.outputs.mode }}-${{ github.run_id }}
+          name: digest-${{ github.run_id }}
           path: |
             docs/_posts/
             digest_summary.txt

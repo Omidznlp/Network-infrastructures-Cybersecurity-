@@ -17,6 +17,10 @@ concurrency:
 
 jobs:
   build:
+    # Set repository variable PAGES_ENABLED=true once GitHub Pages is turned on
+    # (Settings -> Pages -> Source: GitHub Actions). Until then this is a no-op
+    # instead of a failing run - Pages on a private repo needs a paid plan.
+    if: vars.PAGES_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +32,7 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
 
   deploy:
+    if: vars.PAGES_ENABLED == 'true'
     needs: build
     runs-on: ubuntu-latest
     environment:

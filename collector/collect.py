@@ -207,10 +207,44 @@ def load_kev(url: str) -> dict:
         out[v.get("cveID", "").upper()] = {
             "vendor": v.get("vendorProject", ""),
             "product": v.get("product", ""),
+            "name": v.get("vulnerabilityName", ""),
+            "description": v.get("shortDescription", ""),
+            "action": v.get("requiredAction", ""),
+            "added": v.get("dateAdded", ""),
             "due": v.get("dueDate", ""),
             "ransomware": v.get("knownRansomwareCampaignUse", "Unknown"),
         }
     log(f"KEV entries: {len(out)}")
+    return out
+
+
+
+def kev_items(kev: dict, window_hours: int) -> list[Item]:
+    """Turn freshly added KEV catalog entries into digest items.
+
+    The KEV JSON is reachable where the CISA advisories RSS feed is not, and a new
+    KEV entry is the single strongest signal this digest can carry: confirmed
+    exploitation, plus the federally mandated remediation date.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=max(window_hours, 24))
+    out: list[Item] = []
+    for cve, meta in kev.items():
+        added = parse_date(meta.get("added", ""))
+        if not added or added < cutoff:
+            continue
+        product = f"{meta.get('vendor', '')} {meta.get('product', '')}".strip()
+        summary = (f"{meta.get('name', '')}. {meta.get('description', '')} "
+                   f"Required action: {meta.get('action', 'Apply mitigations per vendor instructions.')} "
+                   f"Federal remediation due {meta.get('due', 'n/a')}. "
+                   f"Known ransomware campaign use: {meta.get('ransomware', 'Unknown')}.")
+        out.append(Item(
+            title=f"CISA KEV addition: {product} - {cve}",
+            link=f"https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext={cve}",
+            summary=clean(summary),
+            source="CISA KEV catalog",
+            tier="gov",
+            published=added.isoformat(),
+        ))
     return out
 
 
@@ -279,6 +313,13 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
         raw_items.extend(parsed)
         log(f"{feed['name']}: {len(parsed)} items")
 
+    enr = sources["enrichment"]
+    kev = load_kev(enr["kev_url"]) if enr.get("enable_kev") else {}
+    if kev:
+        added = kev_items(kev, window_hours)
+        log(f"CISA KEV catalog: {len(added)} newly added entries in window")
+        raw_items.extend(added)
+
     fresh, skipped_old, skipped_seen = [], 0, 0
     run_keys: set[str] = set()
     for item in raw_items:
@@ -298,8 +339,6 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
     scored = [score_item(i, kw) for i in fresh]
     relevant = [i for i in scored if i.score >= kw["watchlist_score"]]
 
-    enr = sources["enrichment"]
-    kev = load_kev(enr["kev_url"]) if enr.get("enable_kev") else {}
     all_cves = sorted({c for i in relevant for c in i.cves})
     epss = load_epss(all_cves, enr["epss_url"]) if enr.get("enable_epss") and all_cves else {}
 

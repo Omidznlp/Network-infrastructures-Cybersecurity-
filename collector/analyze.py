@@ -41,8 +41,9 @@ Rules:
   section is carried forward with its date. Never manufacture an AI angle to fill the slot.
 - Name the vendor as the vendor writes it, and use only the schema's fixed device-type list.
 - `summary` is one skimmable sentence under 200 characters, not a restatement of the headline.
-- `vendor_ai_defenses` records AI capabilities vendors have introduced to defend against AI-era
-  threats. Only from collected items, named exactly as the source names them, never invented.
+- `vendor_ai_defenses` records AI capabilities vendors offer against AI-era threats. A formal
+  launch is not required - a vendor describing a capability counts; a pure threat report does not.
+  Only from collected items, named exactly as the source names them, never invented.
 - Be terse. No marketing language, no filler."""
 
 SCHEMA = json.loads((ROOT / "config" / "analysis_schema.json").read_text())

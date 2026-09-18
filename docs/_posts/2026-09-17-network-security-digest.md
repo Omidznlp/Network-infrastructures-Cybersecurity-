@@ -1,633 +1,229 @@
 ---
 layout: post
 title: "Network Device Security Digest - 2026-09-17"
-date: 2026-09-17 22:16:05 +0000
+date: 2026-09-17 22:35:51 +0000
 edition: daily
-critical_count: 4
-item_count: 25
-kev: "CVE-2026-76460"
-analysis_mode: "rule-based"
+critical_count: 2
+item_count: 6
+kev: "CVE-2026-76461"
+analysis_mode: "claude-code-action"
 categories: digest
 ---
 
 # Network Device Security Digest — 2026-09-17
 
-*daily edition · window 24h · 19 feeds · 25 items · 4 critical · generated 2026-09-17 22:16 UTC*
+*daily edition · window 72h · 18 feeds · 6 items · 2 critical · generated 2026-09-17 22:35 UTC*
 
 > Scope: firewalls, VPN gateways, routers, switches, wireless controllers, load balancers and SD-WAN edge. Everything else is filtered out.
 
 ---
 
-## 🧠 Headline — AI and network devices: standing guidance
+## 🧠 Headline — AI-found bugs land where you cannot patch fast: pre-auth flaws in appliances that parse untrusted traffic
 
-No model summary was generated for this edition (ANTHROPIC_API_KEY not set), so this section carries the standing guidance. AI shortens the gap between a public advisory and mass exploitation of internet-facing network devices, and it adds a new privileged surface wherever an assistant or agent can read device state or push configuration.
+One item this cycle addresses AI directly. Cisco Talos argues that AI-assisted vulnerability discovery will keep surfacing flaws that are difficult or effectively impossible to patch, and that segmentation, visibility and NGFW/IPS inspection have to carry the load as a compensating layer. That is a statement about supply, not about a specific incident: the rate at which bugs are found in appliance code is rising faster than the rate at which network teams can schedule maintenance windows on perimeter gear.
+
+The rest of the cycle shows what that supply looks like when it lands. CVE-2026-76461 in Cisco AsyncOS for Secure Email Gateway is a SQL injection in email parsing logic, CVSS 9.8, unauthenticated, root command execution, exploited in the wild, and triggered by sending a crafted email through the appliance's normal mail flow. There is no administrative interface to firewall off and no login to add MFA to - the attack surface is the data plane doing its job. CISA added it to KEV on 2026-09-14 with a due date of 2026-09-17. ZDI-26-709 (CVE-2026-20242) is the same shape one layer in: unauthenticated deserialization RCE on Cisco Secure Firewall Management Center, the box that owns policy for the firewall estate. Compromise there is compromise of every FTD it manages.
+
+The defensive read for this week: management-plane hardening remains necessary but is no longer sufficient for appliances that accept untrusted input by design. Assume exploit development against internet-facing devices is faster than your historical patch SLA and compress that window to days. Where an AI or AIOps assistant touches network management, treat it as a privileged admin path - device logs, hostnames and ticket text are attacker-influenced content, and an agent that reads them and can write config is a prompt-injection target. Use AI on the defensive side for baselining NetFlow and syslog rather than waiting on signature updates, because the first indicator of a data-plane exploit is usually an anomalous outbound flow from an appliance that should never initiate one.
 
 **Preventing it on current systems**
 
-- Assume exploit development and mass scanning are faster than your historical patch SLA - shorten the window for internet-facing network devices to days, not months.
-- Treat any AI/LLM integration on network devices (assistants, AIOps, MCP or agent connectors) as a privileged admin path: scoped read-only credentials, no unattended config write, full audit trail.
-- Test AI-facing management surfaces for prompt injection from attacker-controlled data (device logs, hostnames, ticket text) before letting an agent act on them.
-- Use AI-assisted detection on your side too: baseline NetFlow/syslog and alert on deviation rather than relying on signature updates alone.
-- Harden against AI-enabled social engineering of the network team - callback verification for any out-of-band request to change firewall or VPN configuration.
+- Compress the patch SLA for internet-facing appliances to days. Track KEV due dates as hard change-freeze exceptions - CVE-2026-76461 was added 2026-09-14 with a 2026-09-17 due date.
+- Separate the two attack surfaces: management plane off the internet behind a dedicated management VLAN or out-of-band network with MFA, and data-plane appliances (mail gateways, VPN portals, load balancers) explicitly baselined for outbound behaviour because you cannot ACL away their inbound exposure.
+- Put management systems - firewall management centres, controllers, orchestrators - on their own segment reachable only from a jump host, and patch them before the devices they manage.
+- Baseline NetFlow and syslog per appliance and alert on deviation: any new outbound connection, any new local account, any config or firmware change outside a change record.
+- Scope any AI/LLM/AIOps integration on network gear to read-only credentials with no unattended config write and a full audit trail; test it for prompt injection from device logs, hostnames and ticket text before letting it act.
+- Rotate admin credentials, API keys, certificates and VPN pre-shared keys after patching any appliance that was internet-reachable while vulnerable - the upgrade does not evict an attacker who was already in.
+- Require callback verification for any out-of-band request to change firewall or VPN configuration; AI-generated voice and text make the pretext cheap.
 
 **Preventing it on legacy / end-of-life systems**
 
-- Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-- Put compensating controls in place - strict ACLs, no direct management access, dedicated jump host, full session logging.
-- Set a replacement date and a budget owner; document the accepted risk until then.
-- Where the device cannot be replaced soon, monitor it as a high-risk asset (NetFlow baseline, alert on new outbound flows).
+- Accept that end-of-life gear will never receive a fix for an AI-discovered flaw. Isolate it behind a supported inspecting firewall with IPS and deny inbound access from untrusted zones.
+- Deny the legacy device any direct management access: strict ACLs, dedicated jump host, full session logging, no direct admin path from user VLANs.
+- Where an unsupported appliance must keep processing untrusted input, front it with a supported device that terminates and inspects the protocol first, rather than passing traffic straight through.
+- Monitor unsupported devices as high-risk assets: NetFlow baseline, alert on any new outbound flow or any inbound connection from outside the expected source set.
+- Set a replacement date and a named budget owner, and record the accepted risk against the device group until the swap is done.
+- Disable every service on the legacy device that is not load-bearing - Telnet, TFTP, HTTP admin, UPnP, WAN-side management, SNMP v1/v2c community strings.
 
 ---
 
 ## Executive summary
 
-- 56 network-device items collected in the last 24h from 19 feeds.
-- 2 item(s) reference CISA KEV entries.
-- Model summarization disabled - rule-based advice shown.
+- CVE-2026-76461 (Cisco AsyncOS / Secure Email Gateway, CVSS 9.8) is exploited in the wild and on KEV with a due date of 2026-09-17 - unauthenticated root command execution triggered by a crafted email, no admin interface involved. Treat as the emergency of the cycle.
+- ZDI-26-709 / CVE-2026-20242: unauthenticated deserialization RCE on Cisco Secure Firewall Management Center (CVSS 8.1). The management plane of the firewall estate; restrict reachability to a jump host now and patch on vendor release.
+- Neither Cisco item ships a fixed release in the collected sources - pull the version table directly from the vendor advisory before you build the change record.
+- Cisco Talos frames the structural issue: AI-driven vulnerability discovery produces flaws that cannot be patched in time or at all, so segmentation, visibility and NGFW/IPS inspection become the compensating control rather than the backstop.
+- Lower priority: Palo Alto GlobalProtect App local privilege escalation (CVE-2026-0307, MEDIUM) folds into the normal client push cycle; Issabel PBX CVE-2026-89026 is a hard-coded-credential unauth RCE under active exploitation - relevant if your voice platform sits in your estate, and note the feed mis-tagged it as Ubiquiti.
+- One item dropped as out of scope (Vite dev-server mass scanning - F5 is the researcher, not the affected product).
 
-> **On the CISA KEV catalog in this edition:** CVE-2026-76460 — treat these as confirmed-exploited and patch on an emergency change.
+> **On the CISA KEV catalog in this edition:** CVE-2026-76461 — treat these as confirmed-exploited and patch on an emergency change.
 
 ---
 
 ## Items
 
-### 🔴 CRITICAL — Unauthenticated attackers are bypassing Cisco ISE’s management interface (CVE-2026-76460)
+### 🔴 CRITICAL — CVE-2026-76461: Critical Cisco Secure Email Gateway Vulnerability Exploited in the Wild
 
-*Help Net Security · 2026-09-17 · [source](https://www.helpnetsecurity.com/2026/09/17/cisco-ise-vulnerability-exploited-cve-2026-76460/)* `KEV`
+*Rapid7 Blog · 2026-09-15 · [source](https://www.rapid7.com/blog/post/etr-cve-2026-76461-critical-cisco-secure-email-gateway-vulnerability-exploited-in-the-wild)* `KEV`
 
-**Affected:** cisco  
-**Device types:** generic  
-**CVEs:** [CVE-2026-76460](https://nvd.nist.gov/vuln/detail/CVE-2026-76460) **[KEV]**  
+**Affected:** Cisco AsyncOS Software for Cisco Secure Email Gateway (formerly IronPort Email Security Appliance). CVE-2026-76461, reported CVSS v3.1 base score 9.8. No fixed release is stated in the source.  
+**Device types:** email security gateway, perimeter appliance  
+**CVEs:** [CVE-2026-76461](https://nvd.nist.gov/vuln/detail/CVE-2026-76461) **[KEV]**  
 
-**What happened.** Two days after it warned customers about an actively exploited email gateway zero-day, Cisco confirmed one more flaw is being targeted: CVE-2026-76460, an authentication bypass bug in an API of Cisco Identity Services Engine (ISE). About CVE-2026-76460 Cisco ISE is an identity-based network access control and policy platform. It checks connecting users&#8217; identity, profiles devices and checks 
+**What happened.** Cisco published an advisory on 2026-09-14 for a SQL injection vulnerability in Cisco AsyncOS for Secure Email Gateway allowing an unauthenticated remote attacker to execute arbitrary commands with root privileges on the appliance. Exploitation reportedly requires only sending a specially crafted email through the gateway - no authentication and no access to the administrative interface. CISA added it to KEV on 2026-09-14 with a remediation due date of 2026-09-17.
 
-**Why it matters.** Listed on the CISA KEV catalog - exploitation is confirmed.
+**Why it matters.** The vulnerable path is the appliance's normal mail-processing function, so management-plane ACLs and admin MFA provide no protection. A rooted email gateway sits inline on all inbound and outbound mail, holds mail-flow credentials and LDAP/AD bind accounts, and is typically trusted by internal mail infrastructure. It is being exploited now and the KEV due date has already arrived.
 
 **Recommended actions**
 
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
+- Inventory every Secure Email Gateway / ESA appliance and record its running AsyncOS version; check each against the vendor's fixed-release table - check the vendor advisory for the fixed release, it is not stated in the reporting.
+- Upgrade immediately as an emergency change; where appliances are clustered, upgrade the secondary or non-active unit first and validate mail flow before failing over.
+- If a maintenance window cannot be secured today, apply the vendor's documented mitigation and treat the appliance as suspect - exploitation needs only inbound mail, so there is no exposure reduction available short of taking it out of the mail path.
+- After patching, rotate everything the appliance holds: local admin credentials, API keys, LDAP/AD bind accounts, SMTP relay credentials, certificates and any cloud-console tokens.
+- Export and diff the appliance configuration against a known-good copy: unexpected admin users, message filters, content filters, listener changes, SSH keys or altered routing entries.
+- Restrict management access (HTTPS/SSH/API) to a dedicated management VLAN or out-of-band network and enforce MFA on all administrative accounts, to limit the attacker's next hop even though it does not block this bug.
+- Record the outcome (patched / mitigated / accepted risk) per appliance against the KEV due date of 2026-09-17.
 
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
+**Legacy / unpatchable gear.** IronPort-generation hardware or an AsyncOS train past end of support will not receive a fix. Take it out of the inbound mail path - route mail through a supported gateway or a cloud mail-security service - rather than leaving an unpatchable appliance parsing internet email. If it must stay inline temporarily, place it in its own segment behind an inspecting firewall, deny it any outbound connectivity except the specific mail and update destinations it needs, remove all direct management access in favour of a jump host with full session logging, and monitor it as a high-risk asset. Set a replacement date and a budget owner.
+
+**Detection.** Hunt for outbound connections from the gateway to anything other than known mail peers, DNS, NTP and Cisco update endpoints - a mail appliance initiating arbitrary egress is the strongest signal. Review AsyncOS mail logs and system logs for malformed or unusually structured inbound messages preceding process restarts or errors in the email parsing path, new or modified CLI/admin accounts, new SSH authorized keys, unexpected message/content filter changes, and shell command execution by root outside of maintenance. In NetFlow, alert on any new destination ASN or port from the appliance's IP.
+
+**AI angle.** No AI involvement is reported for this vulnerability. It is the archetype Talos describes in the same cycle: a pre-auth flaw in code that parses attacker-supplied data, where the only durable controls are segmentation, egress control and behavioural detection rather than the patch window.
 
 ---
 
-### 🔴 CRITICAL — Cisco Secure Firewall Adaptive Security Appliance, Secure Firewall Threat Defense, and Secure Firewall Management Center Software Hardening Release: September 2026
+### 🔴 CRITICAL — Cisco Secure Email Gateway Flaw Exploited in the Wild, Enables Root Command Execution
 
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-asaftdfmc-uvpPROhN)* `vendor-advisory`
+*The Hacker News · 2026-09-15 · [source](https://thehackernews.com/2026/09/cisco-secure-email-gateway-flaw.html)* `KEV`
 
-**Affected:** cisco  
-**Device types:** firewall  
+**Affected:** Cisco AsyncOS Software for Cisco Secure Email Gateway. CVE-2026-76461, CVSS 9.8, described as insufficient validation in the email parsing logic. No fixed release is stated in the source.  
+**Device types:** email security gateway, perimeter appliance  
+**CVEs:** [CVE-2026-76461](https://nvd.nist.gov/vuln/detail/CVE-2026-76461) **[KEV]**  
 
-**What happened.** As part of Cisco's ongoing commitment to proactive security and product quality, the Cisco Secure Firewall Adaptive Security Appliance (ASA) Software, Cisco Secure Firewall Threat Defense (FTD) Software and Cisco Secure Firewall Management Center (FMC) Software engineering team has conducted a comprehensive internal security review. This review resulted in software hardening releases that address 
+**What happened.** Second-source confirmation of item 0. Cisco warned that CVE-2026-76461 in AsyncOS for Secure Email Gateway is under active exploitation in the wild; the root cause is described as insufficient validation in the email parsing logic permitting an unauthenticated remote attacker to execute commands.
 
-**Why it matters.** Matched network-device keywords: actively exploited, authentication bypass
+**Why it matters.** Independent reporting of active exploitation raises confidence that this is a live campaign rather than a theoretical CVSS 9.8. The 'insufficient validation in email parsing' framing confirms the trigger is inbound mail, which rules out exposure reduction as a mitigation.
 
 **Recommended actions**
 
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
+- Treat as the same change record as item 0 - do not open a second workstream.
+- Confirm the running AsyncOS version on every appliance against the vendor advisory and upgrade as an emergency change; check the vendor advisory for the fixed release.
+- Escalate the assumption from 'vulnerable' to 'potentially compromised' for any appliance that processed internet mail while unpatched, and run the credential rotation and configuration diff from item 0 regardless of whether IOCs are found.
+- Ask the mail team to preserve AsyncOS logs beyond the default retention before upgrading, so forensic triage is still possible afterwards.
 
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
+**Legacy / unpatchable gear.** Same as item 0: an unsupported AsyncOS train or IronPort-era appliance cannot be fixed. Remove it from the inbound mail path, front it with a supported gateway or cloud mail security, isolate it behind an inspecting firewall with strict egress ACLs and jump-host-only management, monitor it as a high-risk asset, and set a replacement date with a named owner.
+
+**Detection.** As item 0. Additionally, correlate inbound message metadata (sender, source IP, message ID) around the time of any anomalous appliance egress or process behaviour, so the triggering message can be recovered for analysis and the sending infrastructure blocked at the perimeter.
 
 ---
 
-### 🔴 CRITICAL — Cisco Warns of New Zero-Day ISE Auth Bypass (CVSS 10.0) Exploited in Active Attacks
+### 🟠 HIGH — ZDI-26-709: Cisco Secure Firewall Management Center CommandSinkRmi Deserialization of Untrusted Data Remote Code Execution Vulnerability
 
-*The Hacker News · 2026-09-17 · [source](https://thehackernews.com/2026/09/cisco-warns-of-new-zero-day-ise-auth.html)* `KEV`
+*Zero Day Initiative · 2026-09-16 · [source](http://www.zerodayinitiative.com/advisories/ZDI-26-709/)* 
 
-**Affected:** cisco  
-**Device types:** generic  
-**CVEs:** [CVE-2026-76460](https://nvd.nist.gov/vuln/detail/CVE-2026-76460) **[KEV]**  
+**Affected:** Cisco Secure Firewall Management Center. CVE-2026-20242, deserialization of untrusted data in CommandSinkRmi, ZDI-assigned CVSS 8.1, authentication not required. Affected and fixed versions are not stated in the advisory text.  
+**Device types:** firewall, firewall management platform  
+**CVEs:** [CVE-2026-20242](https://nvd.nist.gov/vuln/detail/CVE-2026-20242)  
 
-**What happened.** Cisco has warned of a fresh maximum-severity security flaw impacting Identity Services Engine (ISE) that has come under active exploitation. The vulnerability, tracked as CVE-2026-76460 (CVSS score: 10.0), could allow an unauthenticated, remote attacker to bypass authentication. "This vulnerability is due to insufficient authentication control on an API endpoint," Cisco said. "An attacker
+**What happened.** ZDI published advisory ZDI-26-709 describing an unauthenticated remote code execution vulnerability in Cisco Secure Firewall Management Center caused by deserialization of untrusted data in the CommandSinkRmi component.
 
-**Why it matters.** Listed on the CISA KEV catalog - exploitation is confirmed.
+**Why it matters.** FMC is the policy and management plane for the FTD estate. Code execution on FMC means the ability to push arbitrary policy, read the full firewall configuration set, harvest device credentials and certificates, and reach every managed firewall from a trusted source. No authentication is required, so a single reachable FMC instance is a full-estate compromise path. RMI listeners are frequently left reachable from broader internal networks than intended.
 
 **Recommended actions**
 
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
+- Locate every FMC instance (physical, virtual and cloud-delivered) and determine which networks can currently reach its RMI and management ports.
+- Restrict FMC reachability immediately to a dedicated management network and a named jump host; deny access from user, guest, server and OT VLANs and confirm it is not reachable from the internet or from any VPN pool.
+- Check the vendor advisory for the fixed release and schedule the FMC upgrade ahead of any managed-device upgrades - patch the management plane before the data plane.
+- Enforce MFA on all FMC administrative accounts and remove shared local admin accounts; move admin authentication to TACACS+/RADIUS with per-admin identities.
+- After patching, rotate FMC admin credentials, API tokens, the FMC-to-FTD registration keys and device certificates, and re-verify device registration health.
+- Audit the FMC policy set and audit log for unauthorised access-control rule changes, new policy objects, new admin users, scheduled tasks and unexpected policy deployments.
 
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
+**Legacy / unpatchable gear.** An FMC running on an unsupported hardware generation or an EOL software train will not get this fix. Do not leave it as the live management plane for production firewalls - plan migration to a supported FMC (virtual FMC is the usual bridge) and set a date. Until then, reduce it to a single reachable source: a hardened jump host on an out-of-band management network, with all other paths denied at the firewall in front of it, full session recording on the jump host, and alerting on every authentication attempt. Managed FTDs that survive an FMC compromise still need their registration keys and certificates rotated after migration.
+
+**Detection.** Alert on connections to the FMC RMI/management ports from any source outside the management network. On the FMC itself, hunt for unexpected child processes spawned by the Java management process, new files written outside normal update paths, outbound connections from FMC to non-Cisco destinations, and audit-log entries for policy deployments, new admin users or object changes with no matching change record. On managed FTDs, alert on policy deployments arriving outside the change window.
+
+**AI angle.** None reported. Deserialization sinks in management daemons are a prime target for automated and AI-assisted code analysis, which is an argument for treating the management plane as internet-equivalent hostile territory rather than a trusted internal service.
 
 ---
 
-### 🔴 CRITICAL — Cisco Identity Services Engine Hardening Release: September 2026
+### 🟠 HIGH — Securing the unpatchable in an age of AI-driven vulnerabilities
 
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-ise-XU5EwX5T)* `vendor-advisory`
+*Cisco Talos · 2026-09-16 · [source](https://blog.talosintelligence.com/securing-the-unpatchable-in-an-age-of-ai-driven-vulnerabilities/)* `AI`
 
-**Affected:** cisco  
-**Device types:** generic  
+**Affected:** No specific product. Cisco Talos guidance on devices where a patch is difficult or effectively unavailable.  
+**Device types:** firewall, ips, network infrastructure generally  
 
-**What happened.** As part of Cisco's ongoing commitment to proactive security and product quality, the Cisco Identity Services Engine (ISE) and Cisco ISE Passive Identity Connector (ISE-PIC) engineering teams have conducted a comprehensive internal security review. This review resulted in software hardening releases that address multiple internally discovered vulnerabilities. These vulnerabilities were found during
+**What happened.** Cisco Talos published guidance arguing that advances in AI will keep identifying vulnerabilities that are in some circumstances difficult or effectively impossible to patch, and that network segmentation, rigorous visibility and NGFW/IPS deployment provide a compensatory layer.
 
-**Why it matters.** Matched network-device keywords: actively exploited, authentication bypass
+**Why it matters.** This is the strategic frame for the rest of the cycle, and it changes how a network team should budget its attention. If discovery outpaces the ability to patch, the controls that carry risk are the ones that work without a fix: segmentation that limits what a compromised appliance can reach, egress control that blocks the attacker's callback, inspection that catches exploitation in traffic, and visibility that detects deviation. The two Cisco vulnerabilities this cycle are both pre-auth flaws in code that processes untrusted input - exactly the class where a fast patch is the only traditional control and it frequently arrives too late.
 
 **Recommended actions**
 
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
+- Produce a list of devices in the estate that cannot be patched quickly or at all - end-of-life models, appliances with no maintenance window, OT and voice gear, anything running a train past end of support - and treat that list as a standing risk register rather than a one-off audit.
+- For each device on that list, define the blast radius: what it can reach, what can reach it, and what credentials it holds. Reduce each of the three with ACLs, segmentation and credential scoping.
+- Enforce egress control on network appliances themselves - a firewall, mail gateway or controller should reach a short, named list of destinations and nothing else. This is the control that survives an unpatchable pre-auth RCE.
+- Deploy NGFW/IPS inspection in front of appliances that must accept untrusted input, so exploitation attempts are visible and blockable even before a vendor fix exists.
+- Baseline NetFlow and syslog per device class and alert on deviation rather than relying on signature updates alone; a new outbound flow from an appliance is a higher-fidelity signal than any single IOC.
+- Scope any AI, AIOps or MCP/agent integration touching network management to read-only credentials with no unattended config write and a full audit trail, and test it for prompt injection from attacker-influenced text such as device logs, hostnames and ticket contents.
+- Shorten the patch SLA for internet-facing network devices to days and require callback verification for out-of-band requests to change firewall or VPN configuration.
 
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
+**Legacy / unpatchable gear.** This item is about legacy gear by definition. For anything that will never receive a fix: isolate it behind a supported inspecting firewall, deny inbound access from untrusted zones, permit only the specific flows the device needs in either direction, remove direct management access in favour of a dedicated jump host with full session logging, and monitor it as a high-risk asset with a NetFlow baseline and alerting on any new flow. Then set a replacement date and a named budget owner, and record the accepted risk against the device group until the replacement lands. Compensating controls are a bridge, not a destination.
+
+**Detection.** Not an incident, so no IOCs. The detection work it implies: per-device egress baselines with alerting on any new destination, syslog alerting on admin logins, configuration changes and firmware changes outside change windows, and periodic reconciliation of running versions against the asset inventory so unpatchable devices cannot quietly accumulate.
+
+**AI angle.** This is the AI item of the cycle. Talos's claim is about the supply side - AI-assisted discovery raises the rate at which appliance vulnerabilities are found, including flaws in code paths that cannot be safely changed. The operational consequence is that patch velocity alone stops being a viable strategy and compensating architecture becomes the primary control. The same logic applies to AI on the management side: an LLM assistant or agent with write access to network configuration is a new privileged path that needs scoping, auditing and prompt-injection testing before it is trusted with anything beyond read.
 
 ---
 
-### 🟠 HIGH — Cisco Nexus 9000 Series Switches Silicon One Remote Code Execution Vulnerability
+### 🟡 MEDIUM — CVE-2026-0307 GlobalProtect App: Local Privilege Escalation Vulnerabilities (Severity: MEDIUM)
 
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-n9k-s1-rce-EH8dEtr)* `vendor-advisory`
+*Palo Alto Networks PSIRT · 2026-09-16 · [source](https://security.paloaltonetworks.com/CVE-2026-0307)* `vendor-advisory`
 
-**Affected:** cisco  
-**Device types:** switch  
+**Affected:** Palo Alto Networks GlobalProtect App. CVE-2026-0307, local privilege escalation, vendor severity MEDIUM. No affected or fixed version numbers appear in the PSIRT feed entry.  
+**Device types:** vpn, vpn client endpoint software  
+**CVEs:** [CVE-2026-0307](https://nvd.nist.gov/vuln/detail/CVE-2026-0307)  
 
-**What happened.** A vulnerability in the Silicon One integration for Cisco Nexus 9000 Series Switches could allow an unauthenticated, remote attacker to execute code with root privileges. This vulnerability exists because TCP ports 43210 and 43211 are accessible in the default Layer 3 (L3) virtual routing and forwarding (VRF). A successful exploit could allow the attacker to connect to an affected device and send c
+**What happened.** Palo Alto Networks PSIRT published an advisory for local privilege escalation vulnerabilities in the GlobalProtect App.
 
-**Why it matters.** Matched network-device keywords: unauthenticated, remote code execution, rce
+**Why it matters.** This is the VPN client on managed endpoints, not the gateway, and exploitation requires local access - so it is not a perimeter emergency. It still belongs to the network team because GlobalProtect runs with high privilege on every remote-access endpoint and a local-privilege-escalation chain there gives an attacker SYSTEM/root on machines that hold VPN certificates and tunnel into the corporate network. Firewall and Panorama availability are unaffected.
 
 **Recommended actions**
 
-- Upgrade NOS to the fixed release; validate ISSU/hitless upgrade path for core and distribution switches first.
-- Restrict management plane with control-plane policing and management ACLs; move to out-of-band management.
-- Disable unused ports, set unused ports to an unrouted VLAN, and enforce 802.1X or MAC authentication on access ports.
-- Harden SNMP (v3 with auth+priv only, no public/private community strings) and disable legacy protocols.
-- Segment management, user, guest and OT traffic; verify VLAN ACLs and private VLAN enforcement.
+- Read the PSIRT advisory for the affected client version ranges and the fixed build - check the vendor advisory for the fixed release, the PSIRT feed entry does not list versions.
+- Determine the deployed GlobalProtect App versions from your endpoint management platform, and publish the fixed client through the normal software-distribution cycle rather than as an emergency change.
+- Where the gateway is configured to push client upgrades, set the client-upgrade policy so endpoints pick up the fixed build on next connection, and set a date after which non-compliant client versions are refused or quarantined by HIP policy.
+- Confirm end users cannot disable or downgrade the GlobalProtect client, and that the installation directory and service configuration are not writable by unprivileged users.
+- Continue to enforce phishing-resistant MFA on the remote-access portal, so that a compromised endpoint does not directly yield reusable gateway access.
 
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
+**Legacy / unpatchable gear.** Endpoints on an operating system too old to run a fixed GlobalProtect build cannot be remediated by upgrading the client. Move them off direct VPN access: terminate their sessions on a jump host or virtual desktop in a restricted segment instead of granting a full tunnel, restrict what that segment can reach to the specific applications they need, and set a replacement date for the machines. Do not leave unpatchable endpoints holding a full-tunnel VPN certificate.
+
+**Detection.** On endpoints, alert on privilege escalation patterns around the GlobalProtect service - service binary or configuration modification, unexpected child processes spawned by the GlobalProtect service account, and writes to the installation directory outside of a signed update. On the gateway, report on connecting client versions so stale builds are visible.
 
 ---
 
-### 🟠 HIGH — Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software IKEv2 Certificate Authentication Denial of Service Vulnerability
+### ⚪ WATCH — Attackers Exploit Issabel Framework Flaw Enabling Unauthenticated OS Command Execution
 
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-ikev2cert-dos-uWyc2xtv)* `vendor-advisory`
+*The Hacker News · 2026-09-16 · [source](https://thehackernews.com/2026/09/attackers-exploit-issabel-framework.html)* 
 
-**Affected:** cisco  
-**Device types:** firewall, vpn  
+**Affected:** Issabel Framework, the web-based framework for the open-source unified communications PBX software. CVE-2026-89026, CVSS v3.1 9.8 / CVSS v4.0 9.3, hard-coded credential leading to unauthenticated OS command execution. No fixed release is stated in the source.  
+**Device types:** unified communications / PBX server, voice infrastructure  
+**CVEs:** [CVE-2026-89026](https://nvd.nist.gov/vuln/detail/CVE-2026-89026)  
 
-**What happened.** A vulnerability in the certification authentication feature of Internet Key Exchange version 2 (IKEv2) for Cisco Secure Firewall Adaptive Security Appliance (ASA) Software and Cisco Secure Firewall Threat Defense (FTD) Software could allow an unauthenticated, remote attacker to cause an affected device to reload unexpectedly. This vulnerability is due to a logic error during the certificate authen
+**What happened.** A critical flaw in Issabel Framework is under active exploitation. A hard-coded credential allows an unauthenticated remote attacker to execute arbitrary operating system commands.
 
-**Why it matters.** Matched network-device keywords: kev, unauthenticated
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Management Center Software Java Deserialization Remote Code Execution Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-javarce-y2NypXwk)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** A vulnerability in the External Database Access feature of Cisco Secure Firewall Management Center (FMC) Software could allow an unauthenticated, remote attacker to execute arbitrary commands as root on an affected device. This vulnerability is due to insecure deserialization of a user-supplied Java byte stream from a host that is configured in the external database access list. An attacker could 
-
-**Why it matters.** Matched network-device keywords: unauthenticated, remote code execution
+**Why it matters.** This is a UC/PBX application server, not a firewall, router or switch - hence 'watch' rather than a higher rating. It matters to the network team anyway because voice platforms are commonly internet-exposed for SIP trunking and remote extensions, sit in a VLAN that is often over-trusted, and hold SIP trunk credentials whose theft produces direct toll fraud. Note that the collection feed tagged this item 'ubiquiti'; that is a mis-tag - Issabel is unrelated to Ubiquiti, so do not scope a Ubiquiti estate against this CVE.
 
 **Recommended actions**
 
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Management Center Software Authentication Bypass Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-onprem-fmc-authbypass-5JPp45V2)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** A vulnerability in the web interface of Cisco Secure Firewall Management Center (FMC) Software could allow an unauthenticated, remote attacker to bypass authentication and execute script files on an affected device to obtain root access to the underlying operating system. This vulnerability is due to an improper system process that is created at boot time. An attacker could exploit this vulnerabil
-
-**Why it matters.** Matched network-device keywords: unauthenticated, authentication bypass
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Management Center and Secure Firewall Threat Defense Software sftunnel Vulnerabilities
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmcftd-sftun-multivulns-WGVHOrN3)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** Multiple vulnerabilities in Cisco Secure Firewall Management Center (FMC) Software and Cisco Secure Firewall Threat Defense (FTD) Software could allow an unauthenticated attacker to perform an sftunnel authentication bypass or sftunnel denial of service (DoS) attack. For more information about these vulnerabilities, see the Details section of this advisory. Cisco has released software updates that
-
-**Why it matters.** Matched network-device keywords: unauthenticated, authentication bypass
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software EIGRP Denial of Service Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-eigrp-dos-GOhNejSj)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** A vulnerability in the EIGRP implementation in Cisco Secure Firewall Adaptive Security Appliance (ASA) Software and Cisco Secure Firewall Threat Defense (FTD) Software could allow an unauthenticated, adjacent attacker to cause the device to reload unexpectedly, resulting in a denial of service (DoS) condition. This vulnerability is due to improper resource management when handling EIGRP update mes
-
-**Why it matters.** Matched network-device keywords: unauthenticated, rce
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software for Secure Firewall 3100 and 4200 Series DTLS Denial of Service Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-dtls-dos-Kp57HkyO)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** A vulnerability in Datagram TLS (DTLS) message handling of Cisco Secure Firewall Adaptive Security Appliance (ASA) Software and Cisco Secure Firewall Threat Defense (FTD) Software for Cisco Secure Firewall 3100 Series and 4200 Series devices could allow an unauthenticated, remote attacker to cause a denial of service (DoS) condition on an affected device. This vulnerability is due to improper reso
-
-**Why it matters.** Matched network-device keywords: unauthenticated, rce
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Remote Access SSL VPN Denial of Service Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-vpn-dos-dzv4mQFF)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall, vpn  
-
-**What happened.** A vulnerability in the Remote Access SSL VPN service for Cisco Secure Firewall Adaptive Security Appliance (ASA) Software and Cisco Secure Firewall Threat Defense (FTD) Software could allow an unauthenticated, remote attacker to cause the device to reload unexpectedly, resulting in a denial of service (DoS) condition. This vulnerability is due to insufficient error checking when processing HTTP re
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software SSL VPN Denial of Service Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftdvirtual-dos-MuenGnYR)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall, vpn  
-
-**What happened.** Update for September 16, 2026: The original 1.0 version of this advisory was specific to the Cisco Adaptive Security Virtual Appliance (ASAv) and Cisco Secure Firewall Threat Defense Virtual (FTDv) models. However, it was later found that this vulnerability affects all Cisco Secure Firewall Adaptive Security Appliance (ASA) Software and Cisco Secure Firewall Threat Defense (FTD) Software platforms
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Identity Services Engine Authentication Bypass Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ISE-ABP-VNSW7Tn5)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** generic  
-
-**What happened.** A vulnerability in an API of Cisco Identity Services Engine (ISE) could allow an unauthenticated, remote attacker to bypass authentication. This vulnerability is due to insufficient authentication control on an API endpoint. An attacker could exploit this vulnerability by sending a crafted request to an affected API endpoint. A successful exploit could allow the attacker to gain unauthorized acces
-
-**Why it matters.** Matched network-device keywords: unauthenticated, authentication bypass
-
-**Recommended actions**
-
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Advance Notification for Publication of August 19, 2026, Security Advisories
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-notice-LDquvx5d)* `vendor-advisory`
-
-**Affected:** cisco, ubiquiti  
-**Device types:** switch  
-**CVEs:** [CVE-2026-20030](https://nvd.nist.gov/vuln/detail/CVE-2026-20030), [CVE-2026-20231](https://nvd.nist.gov/vuln/detail/CVE-2026-20231), [CVE-2026-20232](https://nvd.nist.gov/vuln/detail/CVE-2026-20232), [CVE-2026-20302](https://nvd.nist.gov/vuln/detail/CVE-2026-20302), [CVE-2026-20315](https://nvd.nist.gov/vuln/detail/CVE-2026-20315), [CVE-2026-20317](https://nvd.nist.gov/vuln/detail/CVE-2026-20317), [CVE-2026-20318](https://nvd.nist.gov/vuln/detail/CVE-2026-20318), [CVE-2026-20319](https://nvd.nist.gov/vuln/detail/CVE-2026-20319), [CVE-2026-20320](https://nvd.nist.gov/vuln/detail/CVE-2026-20320), [CVE-2026-20327](https://nvd.nist.gov/vuln/detail/CVE-2026-20327), [CVE-2026-20357](https://nvd.nist.gov/vuln/detail/CVE-2026-20357), [CVE-2026-20358](https://nvd.nist.gov/vuln/detail/CVE-2026-20358), [CVE-2026-20359](https://nvd.nist.gov/vuln/detail/CVE-2026-20359)  
-
-**What happened.** On August 19, 2026, the Cisco Product Security Incident Response Team (PSIRT) published the following advisories: Cisco Security Advisory CVE ID Security Impact Rating CVSS Base Score Cisco Crosswork Security Hardening Release: August 2026 CVE-2026-20030 CVE-2026-20357 CVE-2026-20358 CVE-2026-20359 Critical 10.0 Cisco Secure Workload Software Security Hardening Release: August 2026 CVE-2026-20231 
-
-**Why it matters.** Matched network-device keywords: switch
-
-**Recommended actions**
-
-- Upgrade NOS to the fixed release; validate ISSU/hitless upgrade path for core and distribution switches first.
-- Restrict management plane with control-plane policing and management ACLs; move to out-of-band management.
-- Disable unused ports, set unused ports to an unrouted VLAN, and enforce 802.1X or MAC authentication on access ports.
-- Harden SNMP (v3 with auth+priv only, no public/private community strings) and disable legacy protocols.
-- Segment management, user, guest and OT traffic; verify VLAN ACLs and private VLAN enforcement.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Desk Phone 9800 Series, IP Phone 7800 and 8800 Series, and Video Phone 8875 with SIP Software Denial of Service Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-phone-dos-txMYNRzv)* `vendor-advisory`
-
-**Affected:** cisco, ubiquiti  
-**Device types:** generic  
-
-**What happened.** A vulnerability in Cisco Desk Phone 9800 Series, Cisco IP Phone 7800 and 8800 Series, and Cisco Video Phone 8875 that are running Cisco Session Initiation Protocol (SIP) Software could allow an unauthenticated, remote attacker to cause a denial of service (DoS) condition on an affected device. This vulnerability is due to improper memory management when an affected device processes HTTP packets. A
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Advance Notification for Publication of September 2, 2026, Security Advisories
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-notice-f2SiMFxl)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** switch  
-**CVEs:** [CVE-2026-20212](https://nvd.nist.gov/vuln/detail/CVE-2026-20212), [CVE-2026-20274](https://nvd.nist.gov/vuln/detail/CVE-2026-20274), [CVE-2026-20275](https://nvd.nist.gov/vuln/detail/CVE-2026-20275), [CVE-2026-20276](https://nvd.nist.gov/vuln/detail/CVE-2026-20276), [CVE-2026-20277](https://nvd.nist.gov/vuln/detail/CVE-2026-20277), [CVE-2026-20278](https://nvd.nist.gov/vuln/detail/CVE-2026-20278), [CVE-2026-20279](https://nvd.nist.gov/vuln/detail/CVE-2026-20279), [CVE-2026-20280](https://nvd.nist.gov/vuln/detail/CVE-2026-20280), [CVE-2026-20281](https://nvd.nist.gov/vuln/detail/CVE-2026-20281), [CVE-2026-20354](https://nvd.nist.gov/vuln/detail/CVE-2026-20354), [CVE-2026-20355](https://nvd.nist.gov/vuln/detail/CVE-2026-20355)  
-
-**What happened.** On September 2, 2026, the Cisco Product Security Incident Response Team (PSIRT) published the following advisories: Cisco Security Advisory CVE ID Security Impact Rating CVSS Base Score Cisco IOS XR Software Security Hardening Release: September 2026 CVE-2026-20277 CVE-2026-20278 CVE-2026-20280 CVE-2026-20279 CVE-2026-20276 CVE-2026-20275 CVE-2026-20274 Critical 9.8 Cisco Nexus 9000 Series Switche
-
-**Why it matters.** Matched network-device keywords: remote code execution
-
-**Recommended actions**
-
-- Upgrade NOS to the fixed release; validate ISSU/hitless upgrade path for core and distribution switches first.
-- Restrict management plane with control-plane policing and management ACLs; move to out-of-band management.
-- Disable unused ports, set unused ports to an unrouted VLAN, and enforce 802.1X or MAC authentication on access ports.
-- Harden SNMP (v3 with auth+priv only, no public/private community strings) and disable legacy protocols.
-- Segment management, user, guest and OT traffic; verify VLAN ACLs and private VLAN enforcement.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco UCS and UCS-Based Appliances UEFI Shell Secure Boot Bypass Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ucs-uefi-sb-bypass-eb6xC5GW)* `vendor-advisory`
-
-**Affected:** cisco, ubiquiti  
-**Device types:** generic  
-
-**What happened.** A vulnerability in the Unified Extensible Firmware Interface (UEFI) Shell implementation of Cisco UCS Servers and UCS-based appliances could allow an authenticated attacker with valid credentials for a user account with the role of user or admin or an unauthenticated attacker with physical access to an affected device to bypass UEFI Secure Boot validation checks and execute unauthorized software. 
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Identity Services Engine 802.1X Session Hijack and Information Disclosure Vulnerabilities
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ise-multi-vuln-kWLeNnRD)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** generic  
-
-**What happened.** Multiple vulnerabilities in Cisco Identity Services Engine (ISE) could allow an unauthenticated, local attacker to either conduct an authentication bypass or disclose sensitive information. For more information about these vulnerabilities, see the Details section of this advisory. Cisco has released software updates that address these vulnerabilities. There are no workarounds that address these vu
-
-**Why it matters.** Matched network-device keywords: unauthenticated, authentication bypass
-
-**Recommended actions**
-
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Identity Services Engine Remote Code Execution Vulnerabilities
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ise-rce-se7bYU57)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** generic  
-
-**What happened.** Multiple vulnerabilities in Cisco Identity Services Engine (ISE) could allow an authenticated, remote attacker to execute arbitrary commands on the underlying operating system of an affected device. To exploit these vulnerabilities, the attacker must have valid administrative credentials. For more information about these vulnerabilities, see the Details section of this advisory. Cisco has released
-
-**Why it matters.** Matched network-device keywords: remote code execution, rce
-
-**Recommended actions**
-
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Management Center Software Static Credential Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-static-cred-BET3Cjh)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** A vulnerability in the web interface of Cisco Secure Firewall Management Center (FMC) Software could allow an unauthenticated, remote attacker to log in to an affected device using a low-privileged account to access sensitive data within the impacted systems. This vulnerability is due to the presence of static user credentials for a low-privileged account. An attacker could exploit this vulnerabil
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Email Secure/Multipurpose Internet Mail Extensions Ciphertext Decryption Vulnerabilities
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-esa-smime-disc-dzw4rEdY)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** generic  
-**CVEs:** [CVE-2026-20354](https://nvd.nist.gov/vuln/detail/CVE-2026-20354), [CVE-2026-20355](https://nvd.nist.gov/vuln/detail/CVE-2026-20355)  
-
-**What happened.** Multiple vulnerabilities in the Secure/Multipurpose Internet Mail Extensions (S/MIME) decryption functionality of Cisco Secure Email could allow an unauthenticated, remote attacker to recover plain text from encrypted email messages. These vulnerabilities are due to insufficient validation of message integrity. An attacker could exploit these vulnerabilities by using a machine-in-the-middle techni
-
-**Why it matters.** Matched network-device keywords: unauthenticated, rce
-
-**Recommended actions**
-
-- Identify affected devices from your asset inventory, filtered by model and running version.
-- Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.
-- Reduce exposure now: management interfaces off the internet, ACLs on the management plane, MFA on all admin access.
-- Ship device logs to the SIEM and alert on admin logins, config changes and firmware changes.
-- Record the decision (patched / mitigated / accepted risk) against the device group in the change record.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Logging Denial of Service Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asa-ftd-logging-dos-ZXXNesfN)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** A vulnerability in the system rate-limiting process for syslog message 419002 of Cisco Secure Firewall Adaptive Security Appliance (ASA) Software and Cisco Secure Firewall Threat Defense (FTD) Software could allow an unauthenticated, remote attacker to cause high CPU utilization on an affected device, resulting in a denial of service (DoS) condition. This vulnerability is due to improper rate limi
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Object Group Access Control List Bypass Vulnerabilities
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ftd-acl-bypass-8p6vFvw)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** Multiple vulnerabilities in the access control list (ACL) Object Group Search (OGS) implementation of Cisco Secure Firewall Adaptive Security Appliance (ASA) Software and Cisco Secure Firewall Threat Defense (FTD) Software could allow an unauthenticated, remote attacker to bypass configured access controls. These vulnerabilities are due to a logic error in populating group access control policies 
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
-
----
-
-### 🟠 HIGH — Cisco Secure Firewall Threat Defense Software Snort 2 SSL/TLS Denial of Service Vulnerability
-
-*Cisco PSIRT · 2026-09-17 · [source](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ftd-snort2-ssldos-Mw7WYX9c)* `vendor-advisory`
-
-**Affected:** cisco  
-**Device types:** firewall  
-
-**What happened.** A vulnerability in SSL/TLS certificate parsing in the Snort 2 Detection Engine of Cisco Secure Firewall Threat Defense (FTD) Software could allow an unauthenticated, remote attacker to cause the Snort 2 Detection Engine to restart. This vulnerability is due to incomplete validation of the SSL certificate. An attacker could exploit this vulnerability by sending a crafted SSL connection setup reques
-
-**Why it matters.** Matched network-device keywords: unauthenticated
-
-**Recommended actions**
-
-- Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.
-- Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.
-- Enforce MFA on all administrative and VPN accounts; remove shared local admin accounts.
-- After patching, rotate local admin credentials, API keys, certificates and VPN pre-shared keys - a pre-patch compromise survives the upgrade.
-- Export and review the configuration for unexpected admin users, scripts, static routes or modified login pages.
-
-**Legacy / unpatchable gear.** Legacy or end-of-life gear will not receive a fix: isolate it behind a supported inspecting firewall and deny inbound access from untrusted zones.
+- Ask whoever owns voice whether any Issabel (or Issabel-derived FreePBX-family) system exists in the estate; if not, close this out.
+- If one exists, confirm from the firewall whether its web interface is reachable from the internet and remove that exposure now - restrict the admin web UI to an internal management network or VPN.
+- Check the vendor/project advisory for the fixed release and apply it; a hard-coded credential cannot be mitigated by changing a password.
+- Rotate SIP trunk credentials, extension secrets and any AMI/API credentials on the platform, and ask the carrier to apply a spend cap and destination restrictions on the trunk.
+- Segment the voice VLAN: deny it any route to management or server networks it does not need, and restrict outbound SIP to the carrier's IP ranges only.
+
+**Legacy / unpatchable gear.** Unmaintained Issabel or Elastix-era installations are common and will not be fixed. Take the web interface off the internet entirely, place the server behind an inspecting firewall that permits only carrier SIP/RTP ranges inbound and nothing else, deny outbound except to the carrier and NTP/DNS, and manage it only from a jump host. Enforce a carrier-side spend cap and international-destination block so that a compromise is bounded by cost. Plan migration to a supported platform with a named owner and date.
+
+**Detection.** Alert on inbound HTTP/HTTPS to the PBX from external addresses, on outbound connections from the PBX to anything other than the carrier, NTP and DNS, and on shell processes spawned by the web server user. In call detail records, watch for spikes in international or premium-rate destinations, out-of-hours call volume, and new extensions or trunk definitions with no change record.
 
 ---
 
@@ -637,392 +233,102 @@ No model summary was generated for this edition (ANTHROPIC_API_KEY not set), so 
  "date": "2026-09-17",
  "entries": [
   {
-   "title": "Unauthenticated attackers are bypassing Cisco ISE\u2019s management interface (CVE-2026-76460)",
-   "link": "https://www.helpnetsecurity.com/2026/09/17/cisco-ise-vulnerability-exploited-cve-2026-76460/",
-   "source": "Help Net Security",
+   "title": "CVE-2026-76461: Critical Cisco Secure Email Gateway Vulnerability Exploited in the Wild",
+   "link": "https://www.rapid7.com/blog/post/etr-cve-2026-76461-critical-cisco-secure-email-gateway-vulnerability-exploited-in-the-wild",
+   "source": "Rapid7 Blog",
    "relevance": "critical",
    "device_types": [
-    "generic"
+    "email security gateway",
+    "perimeter appliance"
    ],
    "vendors": [
     "cisco"
    ],
    "cves": [
-    "CVE-2026-76460"
+    "CVE-2026-76461"
    ],
    "kev": true
   },
   {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance, Secure Firewall Threat Defense, and Secure Firewall Management Center Software Hardening Release: September 2026",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-asaftdfmc-uvpPROhN",
-   "source": "Cisco PSIRT",
-   "relevance": "critical",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Warns of New Zero-Day ISE Auth Bypass (CVSS 10.0) Exploited in Active Attacks",
-   "link": "https://thehackernews.com/2026/09/cisco-warns-of-new-zero-day-ise-auth.html",
+   "title": "Cisco Secure Email Gateway Flaw Exploited in the Wild, Enables Root Command Execution",
+   "link": "https://thehackernews.com/2026/09/cisco-secure-email-gateway-flaw.html",
    "source": "The Hacker News",
    "relevance": "critical",
    "device_types": [
-    "generic"
+    "email security gateway",
+    "perimeter appliance"
    ],
    "vendors": [
     "cisco"
    ],
    "cves": [
-    "CVE-2026-76460"
+    "CVE-2026-76461"
    ],
    "kev": true
   },
   {
-   "title": "Cisco Identity Services Engine Hardening Release: September 2026",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-ise-XU5EwX5T",
-   "source": "Cisco PSIRT",
-   "relevance": "critical",
-   "device_types": [
-    "generic"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Nexus 9000 Series Switches Silicon One Remote Code Execution Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-n9k-s1-rce-EH8dEtr",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "switch"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software IKEv2 Certificate Authentication Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-ikev2cert-dos-uWyc2xtv",
-   "source": "Cisco PSIRT",
+   "title": "ZDI-26-709: Cisco Secure Firewall Management Center CommandSinkRmi Deserialization of Untrusted Data Remote Code Execution Vulnerability",
+   "link": "http://www.zerodayinitiative.com/advisories/ZDI-26-709/",
+   "source": "Zero Day Initiative",
    "relevance": "high",
    "device_types": [
     "firewall",
-    "vpn"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Management Center Software Java Deserialization Remote Code Execution Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-javarce-y2NypXwk",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Management Center Software Authentication Bypass Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-onprem-fmc-authbypass-5JPp45V2",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Management Center and Secure Firewall Threat Defense Software sftunnel Vulnerabilities",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmcftd-sftun-multivulns-WGVHOrN3",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software EIGRP Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-eigrp-dos-GOhNejSj",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software for Secure Firewall 3100 and 4200 Series DTLS Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-dtls-dos-Kp57HkyO",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Remote Access SSL VPN Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-vpn-dos-dzv4mQFF",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall",
-    "vpn"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software SSL VPN Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftdvirtual-dos-MuenGnYR",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall",
-    "vpn"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Identity Services Engine Authentication Bypass Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ISE-ABP-VNSW7Tn5",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "generic"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Advance Notification for Publication of August 19, 2026, Security Advisories",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-notice-LDquvx5d",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "switch"
-   ],
-   "vendors": [
-    "cisco",
-    "ubiquiti"
-   ],
-   "cves": [
-    "CVE-2026-20030",
-    "CVE-2026-20231",
-    "CVE-2026-20232",
-    "CVE-2026-20302",
-    "CVE-2026-20315",
-    "CVE-2026-20317",
-    "CVE-2026-20318",
-    "CVE-2026-20319",
-    "CVE-2026-20320",
-    "CVE-2026-20327",
-    "CVE-2026-20357",
-    "CVE-2026-20358",
-    "CVE-2026-20359"
-   ],
-   "kev": false
-  },
-  {
-   "title": "Cisco Desk Phone 9800 Series, IP Phone 7800 and 8800 Series, and Video Phone 8875 with SIP Software Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-phone-dos-txMYNRzv",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "generic"
-   ],
-   "vendors": [
-    "cisco",
-    "ubiquiti"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Advance Notification for Publication of September 2, 2026, Security Advisories",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-notice-f2SiMFxl",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "switch"
+    "firewall management platform"
    ],
    "vendors": [
     "cisco"
    ],
    "cves": [
-    "CVE-2026-20212",
-    "CVE-2026-20274",
-    "CVE-2026-20275",
-    "CVE-2026-20276",
-    "CVE-2026-20277",
-    "CVE-2026-20278",
-    "CVE-2026-20279",
-    "CVE-2026-20280",
-    "CVE-2026-20281",
-    "CVE-2026-20354",
-    "CVE-2026-20355"
+    "CVE-2026-20242"
    ],
    "kev": false
   },
   {
-   "title": "Cisco UCS and UCS-Based Appliances UEFI Shell Secure Boot Bypass Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ucs-uefi-sb-bypass-eb6xC5GW",
-   "source": "Cisco PSIRT",
+   "title": "Securing the unpatchable in an age of AI-driven vulnerabilities",
+   "link": "https://blog.talosintelligence.com/securing-the-unpatchable-in-an-age-of-ai-driven-vulnerabilities/",
+   "source": "Cisco Talos",
    "relevance": "high",
    "device_types": [
-    "generic"
+    "firewall",
+    "ips",
+    "network infrastructure generally"
    ],
-   "vendors": [
-    "cisco",
-    "ubiquiti"
-   ],
+   "vendors": [],
    "cves": [],
    "kev": false
   },
   {
-   "title": "Cisco Identity Services Engine 802.1X Session Hijack and Information Disclosure Vulnerabilities",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ise-multi-vuln-kWLeNnRD",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
+   "title": "CVE-2026-0307 GlobalProtect App: Local Privilege Escalation Vulnerabilities (Severity: MEDIUM)",
+   "link": "https://security.paloaltonetworks.com/CVE-2026-0307",
+   "source": "Palo Alto Networks PSIRT",
+   "relevance": "medium",
    "device_types": [
-    "generic"
+    "vpn",
+    "vpn client endpoint software"
    ],
    "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Identity Services Engine Remote Code Execution Vulnerabilities",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ise-rce-se7bYU57",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "generic"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Management Center Software Static Credential Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-static-cred-BET3Cjh",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Email Secure/Multipurpose Internet Mail Extensions Ciphertext Decryption Vulnerabilities",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-esa-smime-disc-dzw4rEdY",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "generic"
-   ],
-   "vendors": [
-    "cisco"
+    "palo alto"
    ],
    "cves": [
-    "CVE-2026-20354",
-    "CVE-2026-20355"
+    "CVE-2026-0307"
    ],
    "kev": false
   },
   {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Logging Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asa-ftd-logging-dos-ZXXNesfN",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
+   "title": "Attackers Exploit Issabel Framework Flaw Enabling Unauthenticated OS Command Execution",
+   "link": "https://thehackernews.com/2026/09/attackers-exploit-issabel-framework.html",
+   "source": "The Hacker News",
+   "relevance": "watch",
    "device_types": [
-    "firewall"
+    "unified communications / PBX server",
+    "voice infrastructure"
    ],
    "vendors": [
-    "cisco"
+    "ubiquiti"
    ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Object Group Access Control List Bypass Vulnerabilities",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ftd-acl-bypass-8p6vFvw",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
+   "cves": [
+    "CVE-2026-89026"
    ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
-   "kev": false
-  },
-  {
-   "title": "Cisco Secure Firewall Threat Defense Software Snort 2 SSL/TLS Denial of Service Vulnerability",
-   "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ftd-snort2-ssldos-Mw7WYX9c",
-   "source": "Cisco PSIRT",
-   "relevance": "high",
-   "device_types": [
-    "firewall"
-   ],
-   "vendors": [
-    "cisco"
-   ],
-   "cves": [],
    "kev": false
   }
  ]
@@ -1031,9 +337,9 @@ No model summary was generated for this edition (ANTHROPIC_API_KEY not set), so 
 
 ## How this was produced
 
-- Feeds polled: 19 ok, 0 failed
-- Raw items: 700 → in window: 111 → network-device relevant: 56 → published: 25
+- Feeds polled: 18 ok, 1 failed
+- Raw items: 670 → in window: 100 → network-device relevant: 8 → published: 6
 - Enrichment: CISA KEV, FIRST EPSS
-- Analysis: `rule-based`
+- Analysis: `claude-code-action`
 
 _Automated digest. Verify every version number against the vendor advisory before you schedule a change._

@@ -40,6 +40,7 @@ class Item:
     epss: dict = field(default_factory=dict)         # CVE -> probability
     urgency: list = field(default_factory=list)
     ai_related: bool = False
+    ai_defense: bool = False
     tags: list = field(default_factory=list)
 
 
@@ -184,6 +185,19 @@ def score_item(item: Item, kw: dict) -> Item:
     if any(term in blob for term in ai["terms"]):
         item.ai_related = True
         score += ai["weight"]
+
+    # A vendor shipping an AI defence: an AI security product, or an AI capability being
+    # launched. Tracked separately from AI-enabled attacks - it is the answer, not the threat.
+    # A vendor writing about AI on its own blog is the vendor's defensive position, whether or
+    # not it uses launch language - "Agentic Network Security Management" announces a capability
+    # just as surely as "announces". Requiring a launch verb missed nearly all of them.
+    defence = kw.get("ai_defense_terms", {})
+    if any(term in blob for term in defence.get("product_terms", [])) or (
+        item.ai_related and (item.tier == "vendor-news"
+                             or any(term in blob for term in defence.get("launch_terms", [])))
+    ):
+        item.ai_defense = True
+        score += 3
 
     if any(term in blob for term in kw["exclude_terms"]):
         score -= 10
@@ -342,7 +356,9 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
         fresh.append(item)
 
     scored = [score_item(i, kw) for i in fresh]
-    on_topic = [i for i in scored if i.vendors or i.categories or i.tier == "psirt"]
+    on_topic = [i for i in scored
+                if i.vendors or i.categories or i.tier == "psirt"
+                or (i.ai_defense and i.tier == "vendor-news")]
     log(f"dropped {len(scored) - len(on_topic)} items with no network-device or vendor match")
     relevant = [i for i in on_topic if i.score >= kw["min_score"]]
 
@@ -360,6 +376,8 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
             item.tags.append("high-EPSS")
         if item.ai_related:
             item.tags.append("AI")
+        if item.ai_defense:
+            item.tags.append("AI-defense")
         if item.tier == "psirt":
             item.tags.append("vendor-advisory")
 

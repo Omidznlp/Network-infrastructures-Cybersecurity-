@@ -41,6 +41,8 @@ Rules:
   section is carried forward with its date. Never manufacture an AI angle to fill the slot.
 - Name the vendor as the vendor writes it, and use only the schema's fixed device-type list.
 - `summary` is one skimmable sentence under 200 characters, not a restatement of the headline.
+- `vendor_ai_defenses` records AI capabilities vendors have introduced to defend against AI-era
+  threats. Only from collected items, named exactly as the source names them, never invented.
 - Be terse. No marketing language, no filler."""
 
 SCHEMA = json.loads((ROOT / "config" / "analysis_schema.json").read_text())
@@ -141,6 +143,15 @@ def rule_based(payload: dict) -> dict:
                      "No advisory or report in this window concerned network infrastructure devices."),
             "actions_now": worst["actions"] if worst else [],
         },
+        "vendor_ai_defenses": [
+            {"id": idx, "vendor": (item["vendors"][0].title() if item["vendors"] else "Unspecified"),
+             "solution": item["title"][:120],
+             "what_it_does": one_sentence(item["summary"]),
+             "defends_against": "AI-era threats (see source)",
+             "availability": "not stated",
+             "worth_evaluating_if": "You run this vendor's gear and are assessing AI-assisted defence."}
+            for idx, item in enumerate(payload["items"][:MAX_ITEMS]) if item.get("ai_defense")
+        ],
         # No model ran, so there is no new AI reading; the carry-forward step fills this.
         "ai_section": {"has_new_ai": False, "title": "", "body": "",
                        "prevention_modern": [], "prevention_legacy": []},
@@ -192,6 +203,7 @@ def analyze(payload: dict) -> dict:
                                   "infrastructure devices.", "actions_now": []},
             "ai_section": {"has_new_ai": False, "title": "", "body": "",
                            "prevention_modern": [], "prevention_legacy": []},
+            "vendor_ai_defenses": [],
             "executive_summary": ["Nothing to report."], "items": [], "analysis_mode": "empty"})
     if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
         log("no API key - using rule-based fallback")
@@ -230,6 +242,14 @@ def validate(result: object, item_count: int) -> dict:
         raise ValueError("ai_section missing has_new_ai")
     if ai["has_new_ai"] and not ai.get("body"):
         raise ValueError("ai_section claims new AI content but has no body")
+
+    defenses = result.get("vendor_ai_defenses", [])
+    if not isinstance(defenses, list):
+        raise ValueError("vendor_ai_defenses must be a list")
+    for pos, d in enumerate(defenses):
+        if not isinstance(d, dict) or not d.get("vendor") or not d.get("solution"):
+            raise ValueError(f"vendor_ai_defenses[{pos}] missing vendor or solution")
+    result["vendor_ai_defenses"] = defenses
 
     if not isinstance(result.get("executive_summary"), list):
         raise ValueError("executive_summary must be a list")

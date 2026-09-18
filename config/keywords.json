@@ -3,64 +3,424 @@
   "min_score": 4,
   "watchlist_score": 2,
   "vendors": {
-    "cisco":      {"weight": 4, "terms": ["cisco", "ios xe", "ios-xe", "asa ", "firepower", "ftd", "nx-os", "nexus", "catalyst", "meraki", "anyconnect", "secure client", "iosxr", "ios xr"]},
-    "fortinet":   {"weight": 4, "terms": ["fortinet", "fortios", "fortigate", "fortiproxy", "fortimanager", "fortiweb", "fortiswitch", "fortiap", "fortinac"]},
-    "palo alto":  {"weight": 4, "terms": ["palo alto", "pan-os", "panos", "globalprotect", "panorama", "prisma access"]},
-    "ivanti":     {"weight": 4, "terms": ["ivanti", "connect secure", "pulse secure", "policy secure", "neurons for zta"]},
-    "citrix":     {"weight": 4, "terms": ["citrix", "netscaler", "adc gateway", "citrixbleed"]},
-    "juniper":    {"weight": 4, "terms": ["juniper", "junos", "srx", "mx series", "ex series", "mist"]},
-    "f5":         {"weight": 4, "terms": ["f5 ", "big-ip", "bigip", "big-iq", "nginx plus"]},
-    "sonicwall":  {"weight": 4, "terms": ["sonicwall", "sonicos", "sma 100", "sma100"]},
-    "check point":{"weight": 4, "terms": ["check point", "checkpoint", "gaia os", "quantum security gateway"]},
-    "sophos":     {"weight": 4, "terms": ["sophos", "sophos firewall", "sophos xg", "utm 9"]},
-    "watchguard": {"weight": 4, "terms": ["watchguard", "fireware"]},
-    "zyxel":      {"weight": 4, "terms": ["zyxel"]},
-    "mikrotik":   {"weight": 4, "terms": ["mikrotik", "routeros"]},
-    "netgear":    {"weight": 4, "terms": ["netgear", "nighthawk", "prosafe"]},
-    "tp-link":    {"weight": 4, "terms": ["tp-link", "tplink", "omada", "archer "]},
-    "d-link":     {"weight": 4, "terms": ["d-link", "dlink", "dir-"]},
-    "asus":       {"weight": 3, "terms": ["asus router", "asuswrt", "rt-ac", "rt-ax"]},
-    "huawei":     {"weight": 3, "terms": ["huawei", "hg8", "vrp"]},
-    "hpe aruba":  {"weight": 4, "terms": ["aruba", "arubaos", "hpe networking", "clearpass", "instant on"]},
-    "arista":     {"weight": 4, "terms": ["arista", "eos switch", "cloudvision"]},
-    "extreme":    {"weight": 4, "terms": ["extreme networks", "exos", "voss"]},
-    "ubiquiti":   {"weight": 4, "terms": ["ubiquiti", "unifi", "edgerouter", "edgeswitch"]},
-    "barracuda":  {"weight": 4, "terms": ["barracuda", "cloudgen"]},
-    "qnap-synology-edge": {"weight": 2, "terms": ["qnap", "synology", "asustor"]},
-    "vpn-gateways": {"weight": 4, "terms": ["array networks", "pulse connect", "openvpn access server", "wireguard", "strongswan", "libreswan"]},
-    "telco-core": {"weight": 3, "terms": ["nokia sr", "adtran", "dasan", "zte router", "calix", "draytek", "vigor "]}
+    "cisco": {
+      "weight": 4,
+      "terms": [
+        "cisco",
+        "ios xe",
+        "ios-xe",
+        "asa ",
+        "firepower",
+        "ftd",
+        "nx-os",
+        "nexus",
+        "catalyst",
+        "meraki",
+        "anyconnect",
+        "secure client",
+        "iosxr",
+        "ios xr"
+      ]
+    },
+    "fortinet": {
+      "weight": 4,
+      "terms": [
+        "fortinet",
+        "fortios",
+        "fortigate",
+        "fortiproxy",
+        "fortimanager",
+        "fortiweb",
+        "fortiswitch",
+        "fortiap",
+        "fortinac"
+      ]
+    },
+    "palo alto": {
+      "weight": 4,
+      "terms": [
+        "palo alto",
+        "pan-os",
+        "panos",
+        "globalprotect",
+        "panorama",
+        "prisma access"
+      ]
+    },
+    "ivanti": {
+      "weight": 4,
+      "terms": [
+        "ivanti",
+        "connect secure",
+        "pulse secure",
+        "policy secure",
+        "neurons for zta"
+      ]
+    },
+    "citrix": {
+      "weight": 4,
+      "terms": [
+        "citrix",
+        "netscaler",
+        "adc gateway",
+        "citrixbleed"
+      ]
+    },
+    "juniper": {
+      "weight": 4,
+      "terms": [
+        "juniper",
+        "junos",
+        "srx",
+        "mx series",
+        "ex series",
+        "mist"
+      ]
+    },
+    "f5": {
+      "weight": 4,
+      "terms": [
+        "f5 ",
+        "big-ip",
+        "bigip",
+        "big-iq",
+        "nginx plus"
+      ]
+    },
+    "sonicwall": {
+      "weight": 4,
+      "terms": [
+        "sonicwall",
+        "sonicos",
+        "sma 100",
+        "sma100"
+      ]
+    },
+    "check point": {
+      "weight": 4,
+      "terms": [
+        "check point",
+        "checkpoint",
+        "gaia os",
+        "quantum security gateway"
+      ]
+    },
+    "sophos": {
+      "weight": 4,
+      "terms": [
+        "sophos",
+        "sophos firewall",
+        "sophos xg",
+        "utm 9"
+      ]
+    },
+    "watchguard": {
+      "weight": 4,
+      "terms": [
+        "watchguard",
+        "fireware"
+      ]
+    },
+    "zyxel": {
+      "weight": 4,
+      "terms": [
+        "zyxel"
+      ]
+    },
+    "mikrotik": {
+      "weight": 4,
+      "terms": [
+        "mikrotik",
+        "routeros"
+      ]
+    },
+    "netgear": {
+      "weight": 4,
+      "terms": [
+        "netgear",
+        "nighthawk",
+        "prosafe"
+      ]
+    },
+    "tp-link": {
+      "weight": 4,
+      "terms": [
+        "tp-link",
+        "tplink",
+        "omada",
+        "archer "
+      ]
+    },
+    "d-link": {
+      "weight": 4,
+      "terms": [
+        "d-link",
+        "dlink",
+        "dir-"
+      ]
+    },
+    "asus": {
+      "weight": 3,
+      "terms": [
+        "asus router",
+        "asuswrt",
+        "rt-ac",
+        "rt-ax"
+      ]
+    },
+    "huawei": {
+      "weight": 3,
+      "terms": [
+        "huawei",
+        "hg8",
+        "vrp"
+      ]
+    },
+    "hpe aruba": {
+      "weight": 4,
+      "terms": [
+        "aruba",
+        "arubaos",
+        "hpe networking",
+        "clearpass",
+        "instant on"
+      ]
+    },
+    "arista": {
+      "weight": 4,
+      "terms": [
+        "arista",
+        "eos switch",
+        "cloudvision"
+      ]
+    },
+    "extreme": {
+      "weight": 4,
+      "terms": [
+        "extreme networks",
+        "exos",
+        "voss"
+      ]
+    },
+    "ubiquiti": {
+      "weight": 4,
+      "terms": [
+        "ubiquiti",
+        "unifi",
+        "edgerouter",
+        "edgeswitch"
+      ]
+    },
+    "barracuda": {
+      "weight": 4,
+      "terms": [
+        "barracuda",
+        "cloudgen"
+      ]
+    },
+    "qnap-synology-edge": {
+      "weight": 2,
+      "terms": [
+        "qnap",
+        "synology",
+        "asustor"
+      ]
+    },
+    "vpn-gateways": {
+      "weight": 4,
+      "terms": [
+        "array networks",
+        "pulse connect",
+        "openvpn access server",
+        "wireguard",
+        "strongswan",
+        "libreswan"
+      ]
+    },
+    "telco-core": {
+      "weight": 3,
+      "terms": [
+        "nokia sr",
+        "adtran",
+        "dasan",
+        "zte router",
+        "calix",
+        "draytek",
+        "vigor "
+      ]
+    }
   },
   "device_classes": {
-    "firewall":        {"weight": 3, "terms": ["firewall", "ngfw", "utm appliance", "security gateway", "next-generation firewall", "waf"]},
-    "vpn":             {"weight": 3, "terms": ["vpn", "ssl vpn", "ipsec", "remote access gateway", "zero trust gateway", "ztna"]},
-    "router":          {"weight": 3, "terms": ["router", "routers", "edge device", "cpe", "soho router", "bgp", "ospf"]},
-    "switch":          {"weight": 3, "terms": ["switch", "switches", "switching", "vlan", "stp ", "spanning tree", "poe switch"]},
-    "wireless":        {"weight": 3, "terms": ["wireless controller", "access point", "wlan", "wi-fi router", "wifi router", "wlc"]},
-    "load-balancer":   {"weight": 3, "terms": ["load balancer", "adc appliance", "application delivery controller", "reverse proxy appliance"]},
-    "sdwan":           {"weight": 3, "terms": ["sd-wan", "sdwan", "sase", "secure access service edge"]},
-    "mgmt-protocols":  {"weight": 2, "terms": ["snmp", "netconf", "tacacs", "radius", "ssh daemon", "telnet", "tftp", "smb of network device"]},
-    "ot-network":      {"weight": 2, "terms": ["industrial switch", "ics network", "scada gateway", "modbus gateway", "plc network"]}
+    "firewall": {
+      "weight": 3,
+      "terms": [
+        "firewall",
+        "ngfw",
+        "utm appliance",
+        "security gateway",
+        "next-generation firewall",
+        "waf"
+      ]
+    },
+    "vpn": {
+      "weight": 3,
+      "terms": [
+        "vpn",
+        "ssl vpn",
+        "ipsec",
+        "remote access gateway",
+        "zero trust gateway",
+        "ztna"
+      ]
+    },
+    "router": {
+      "weight": 3,
+      "terms": [
+        "router",
+        "routers",
+        "edge device",
+        "cpe",
+        "soho router",
+        "bgp",
+        "ospf"
+      ]
+    },
+    "switch": {
+      "weight": 3,
+      "terms": [
+        "switch",
+        "switches",
+        "switching",
+        "vlan",
+        "stp ",
+        "spanning tree",
+        "poe switch"
+      ]
+    },
+    "wireless": {
+      "weight": 3,
+      "terms": [
+        "wireless controller",
+        "access point",
+        "wlan",
+        "wi-fi router",
+        "wifi router",
+        "wlc"
+      ]
+    },
+    "load-balancer": {
+      "weight": 3,
+      "terms": [
+        "load balancer",
+        "adc appliance",
+        "application delivery controller",
+        "reverse proxy appliance"
+      ]
+    },
+    "sdwan": {
+      "weight": 3,
+      "terms": [
+        "sd-wan",
+        "sdwan",
+        "sase",
+        "secure access service edge"
+      ]
+    },
+    "mgmt-protocols": {
+      "weight": 2,
+      "terms": [
+        "snmp",
+        "netconf",
+        "tacacs",
+        "radius",
+        "ssh daemon",
+        "telnet",
+        "tftp",
+        "smb of network device"
+      ]
+    },
+    "ot-network": {
+      "weight": 2,
+      "terms": [
+        "industrial switch",
+        "ics network",
+        "scada gateway",
+        "modbus gateway",
+        "plc network"
+      ]
+    }
   },
   "generic_terms": {
     "weight": 1,
-    "terms": ["network appliance", "network infrastructure", "edge appliance", "perimeter device", "management interface", "network equipment", "gateway appliance"]
+    "terms": [
+      "network appliance",
+      "network infrastructure",
+      "edge appliance",
+      "perimeter device",
+      "management interface",
+      "network equipment",
+      "gateway appliance"
+    ]
   },
   "urgency_terms": {
-    "actively exploited": 5, "in the wild": 4, "zero-day": 5, "0-day": 5,
-    "known exploited": 5, "kev": 3, "unauthenticated": 3, "pre-auth": 3,
-    "remote code execution": 4, "rce": 3, "authentication bypass": 4,
-    "command injection": 3, "backdoor": 4, "botnet": 2, "ransomware": 3,
-    "emergency directive": 5, "patch now": 3, "proof-of-concept": 2, "poc exploit": 3,
-    "end-of-life": 2, "end of support": 2, "no patch": 3, "unpatched": 3
+    "actively exploited": 5,
+    "in the wild": 4,
+    "zero-day": 5,
+    "0-day": 5,
+    "known exploited": 5,
+    "kev": 3,
+    "unauthenticated": 3,
+    "pre-auth": 3,
+    "remote code execution": 4,
+    "rce": 3,
+    "authentication bypass": 4,
+    "command injection": 3,
+    "backdoor": 4,
+    "botnet": 2,
+    "ransomware": 3,
+    "emergency directive": 5,
+    "patch now": 3,
+    "proof-of-concept": 2,
+    "poc exploit": 3,
+    "end-of-life": 2,
+    "end of support": 2,
+    "no patch": 3,
+    "unpatched": 3
   },
   "ai_terms": {
     "weight": 3,
-    "terms": ["artificial intelligence", " ai ", "ai-powered", "ai powered", "ai-driven", "ai agent", "agentic",
-              "llm", "large language model", "genai", "generative ai", "machine learning", "deep learning",
-              "prompt injection", "ai-generated", "deepfake", "autonomous exploitation", "ai-assisted attack",
-              "copilot", "chatgpt", "claude", "model context protocol", "aiops"]
+    "terms": [
+      "artificial intelligence",
+      " ai ",
+      "ai-powered",
+      "ai powered",
+      "ai-driven",
+      "ai agent",
+      "agentic",
+      "llm",
+      "large language model",
+      "genai",
+      "generative ai",
+      "machine learning",
+      "deep learning",
+      "prompt injection",
+      "ai-generated",
+      "deepfake",
+      "autonomous exploitation",
+      "ai-assisted attack",
+      "copilot",
+      "chatgpt",
+      "claude",
+      "model context protocol",
+      "aiops"
+    ]
   },
-  "exclude_terms": ["job posting", "webinar registration", "sponsored content", "black friday"],
+  "exclude_terms": [
+    "job posting",
+    "webinar registration",
+    "sponsored content",
+    "black friday"
+  ],
   "playbooks": {
     "firewall": [
       "Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.",
@@ -127,6 +487,48 @@
       "Test AI-facing management surfaces for prompt injection from attacker-controlled data (device logs, hostnames, ticket text) before letting an agent act on them.",
       "Use AI-assisted detection on your side too: baseline NetFlow/syslog and alert on deviation rather than relying on signature updates alone.",
       "Harden against AI-enabled social engineering of the network team - callback verification for any out-of-band request to change firewall or VPN configuration."
+    ]
+  },
+  "ai_defense_terms": {
+    "_comment": "A vendor shipping something to defend against AI-era threats, or to secure AI itself.",
+    "product_terms": [
+      "fortiai",
+      "precision ai",
+      "security copilot",
+      "ai assistant",
+      "aiops",
+      "ai-powered security",
+      "ai powered security",
+      "ai-driven security",
+      "ai security posture",
+      "ai firewall",
+      "ai threat detection",
+      "ai soc",
+      "infinity ai",
+      "ai defense",
+      "ai defence",
+      "ai guardrails",
+      "llm firewall",
+      "prompt injection protection",
+      "ai runtime security",
+      "secure ai",
+      "ai protect"
+    ],
+    "launch_terms": [
+      "announces",
+      "announced",
+      "introduces",
+      "introducing",
+      "launches",
+      "launched",
+      "unveils",
+      "now available",
+      "general availability",
+      "new capability",
+      "adds support",
+      "expands",
+      "releases",
+      "rolls out"
     ]
   }
 }

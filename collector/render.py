@@ -161,6 +161,31 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
                         f"({tidy_url(src.get('link', '#'))})**", ""]
         out += ["---", ""]
 
+    # Vendor AI defences: what the vendors shipped to answer AI-era threats.
+    defenses = analysis.get("vendor_ai_defenses") or []
+    if defenses:
+        out += ["## 🛡️ Vendor AI defences introduced", "",
+                "AI capabilities the vendors shipped this cycle - the answer side of the AI story.", ""]
+        by_v: dict[str, list] = {}
+        for d in defenses:
+            by_v.setdefault(d.get("vendor", "Unspecified"), []).append(d)
+        for vendor in sorted(by_v):
+            out += [f"### {vendor}", ""]
+            for d in by_v[vendor]:
+                src = items_in[d["id"]] if isinstance(d.get("id"), int) and d["id"] < len(items_in) else {}
+                out += [
+                    f"**{d.get('solution', '')}** — {d.get('what_it_does', '')}",
+                    "",
+                    f"- *Defends against:* {d.get('defends_against', 'not stated')}",
+                    f"- *Availability:* {d.get('availability', 'not stated')}",
+                    f"- *Worth evaluating if:* {d.get('worth_evaluating_if', '')}",
+                ]
+                if src.get("link"):
+                    out.append(f"- 📄 [Read the announcement at {src.get('source', 'the source')} →]"
+                               f"({tidy_url(src['link'])})")
+                out.append("")
+        out += ["---", ""]
+
     # AI section: today's if there is real AI news, otherwise the last one, dated.
     ai = analysis.get("ai_section") or {}
     ai_vendors = sorted({a.get("vendor") for a in kept
@@ -195,6 +220,14 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
                 "kev": bool(items_in[a["id"]]["kev"]),
                 "ai": bool(items_in[a["id"]].get("ai_related") or (a.get("ai_angle") or "").strip()),
                 "ai_angle": (a.get("ai_angle") or "").strip(),
+                "summary": a.get("summary", ""),
+                "ai_defense": bool(items_in[a["id"]].get("ai_defense")),
+                "defense": next(({"solution": d.get("solution", ""),
+                                  "what_it_does": d.get("what_it_does", ""),
+                                  "defends_against": d.get("defends_against", ""),
+                                  "availability": d.get("availability", "")}
+                                 for d in (analysis.get("vendor_ai_defenses") or [])
+                                 if d.get("id") == a["id"]), None),
             }
             for a in kept if a["id"] < len(items_in)
         ],
@@ -222,6 +255,9 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
         "top_actions": top.get("actions_now", [])[:5],
         "executive_summary": analysis.get("executive_summary", []),
         "key_actions": seen_actions[:8],
+        "ai_defenses": [{"vendor": d.get("vendor", ""), "solution": d.get("solution", ""),
+                         "what_it_does": d.get("what_it_does", "")}
+                        for d in (analysis.get("vendor_ai_defenses") or [])][:5],
         "headlines": [
             {
                 "title": items_in[a["id"]]["title"],

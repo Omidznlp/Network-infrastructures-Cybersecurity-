@@ -126,6 +126,12 @@ jobs:
               Do not start it with "This article" or repeat the headline verbatim.
             - `vendor` is the primary vendor as that vendor writes its own name ("Palo Alto Networks",
               not "palo alto"). `device_types` must come from the schema's fixed list and nothing else.
+            - `vendor_ai_defenses` tracks the answer side: AI capabilities the vendors have
+              introduced - an AI security product or feature, AI-assisted detection, guardrails for
+              AI running on network gear, or vendor guidance for defending against AI-enabled
+              attacks. Include an entry only when a collected item actually announces one, name the
+              product exactly as the source names it, and never invent a product, a capability or an
+              availability date. An empty array is the correct answer most days.
             - `ai_section` is NOT a daily obligation. Set has_new_ai true ONLY when a collected item
               genuinely concerns AI: AI-assisted attack or vulnerability discovery, an AI/LLM/AIOps
               integration on network gear, or prompt injection against network management. Otherwise

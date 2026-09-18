@@ -224,6 +224,40 @@ def build() -> list[Path]:
         path.write_text(page("AI & network devices", body, "/browse/ai/"))
         written.append(path)
 
+    # AI defences tracker - what each vendor has shipped, accumulating over time.
+    defense_entries = [e for e in entries if e.get("ai_defense") or e.get("defense")]
+    if defense_entries:
+        body = [f"*{len(defense_entries)} vendor AI capability announcement(s), all editions.*", "",
+                "What the network vendors have shipped to answer AI-era threats: AI security "
+                "products and features, AI-assisted detection, guardrails for AI running on "
+                "network gear, and vendor guidance for defending against AI-enabled attacks.", ""]
+        grouped: dict[str, list[dict]] = defaultdict(list)
+        for e in defense_entries:
+            for v in e.get("vendors") or ["Unspecified"]:
+                grouped[v].append(e)
+        for vendor in sorted(grouped, key=lambda v: (-len(grouped[v]), v)):
+            body += [f"## {vendor} ({len(grouped[vendor])})", ""]
+            for e in sorted(grouped[vendor], key=lambda x: x.get("date", ""), reverse=True):
+                d = e.get("defense") or {}
+                if d.get("solution"):
+                    body.append(f"### {d['solution']}")
+                    body.append("")
+                    if d.get("what_it_does"):
+                        body.append(d["what_it_does"])
+                        body.append("")
+                    meta = []
+                    if d.get("defends_against"):
+                        meta.append(f"*Defends against:* {d['defends_against']}")
+                    if d.get("availability"):
+                        meta.append(f"*Availability:* {d['availability']}")
+                    if meta:
+                        body += ["  \n".join(meta), ""]
+                body.append(entry_line(e))
+                body.append("")
+        path = BROWSE / "topic-ai-defenses.md"
+        path.write_text(page("Vendor AI defences", body, "/browse/ai-defenses/"))
+        written.append(path)
+
     # Time archives: week, month and year, each grouped by vendor.
     def parse_day(value: str):
         try:
@@ -300,11 +334,16 @@ def build() -> list[Path]:
                                     for d in (e.get("device_types") or ["other"])}))
         body.append(f"- [{vendor}]({{{{ '/browse/vendor/{slug(vendor)}/' | relative_url }}}}) "
                     f"({len(by_vendor[vendor])}) <small>{devices}</small>")
-    if ai_entries:
-        ai_vendors = ", ".join(sorted({v for e in ai_entries for v in e["vendors"]}))
-        body += ["", "## By topic", "",
-                 f"- [🧠 AI & network devices]({{{{ '/browse/ai/' | relative_url }}}}) "
-                 f"({len(ai_entries)}) <small>{ai_vendors}</small>"]
+    if ai_entries or defense_entries:
+        body += ["", "## By topic", ""]
+        if ai_entries:
+            ai_vendors = ", ".join(sorted({v for e in ai_entries for v in e["vendors"]}))
+            body.append(f"- [🧠 AI & network devices]({{{{ '/browse/ai/' | relative_url }}}}) "
+                        f"({len(ai_entries)}) <small>{ai_vendors}</small>")
+        if defense_entries:
+            dv = ", ".join(sorted({v for e in defense_entries for v in e["vendors"]}))
+            body.append(f"- [🛡️ Vendor AI defences]({{{{ '/browse/ai-defenses/' | relative_url }}}}) "
+                        f"({len(defense_entries)}) <small>{dv}</small>")
     if by_year:
         latest_week = sorted(by_week, reverse=True)[0] if by_week else None
         latest_month = sorted(by_month, reverse=True)[0] if by_month else None

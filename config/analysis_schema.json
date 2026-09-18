@@ -152,13 +152,60 @@
         ],
         "additionalProperties": false
       }
+    },
+    "vendor_ai_defenses": {
+      "type": "array",
+      "description": "Defensive AI capabilities that network vendors have introduced in this cycle: an AI security product or feature, AI-assisted detection, guardrails for AI on network gear, or vendor guidance for defending against AI-enabled attacks. Empty array when no collected item announces one. Never invent a product name.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "index of the collected item announcing it"
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "solution": {
+            "type": "string",
+            "description": "Product or capability name exactly as the source names it."
+          },
+          "what_it_does": {
+            "type": "string",
+            "description": "One or two sentences, from the source only."
+          },
+          "defends_against": {
+            "type": "string",
+            "description": "Which AI-era threat this addresses."
+          },
+          "availability": {
+            "type": "string",
+            "description": "GA, preview, announced, or 'not stated'."
+          },
+          "worth_evaluating_if": {
+            "type": "string",
+            "description": "Which teams should look at it, and why."
+          }
+        },
+        "required": [
+          "id",
+          "vendor",
+          "solution",
+          "what_it_does",
+          "defends_against",
+          "availability",
+          "worth_evaluating_if"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
     "top_story",
     "ai_section",
     "executive_summary",
-    "items"
+    "items",
+    "vendor_ai_defenses"
   ],
   "additionalProperties": false
 }

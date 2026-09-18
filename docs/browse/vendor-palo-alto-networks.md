@@ -1,14 +1,19 @@
 ---
 layout: default
-title: "Vpn Client Endpoint Software"
-permalink: /browse/device/vpn-client-endpoint-software/
+title: "Palo Alto Networks"
+permalink: /browse/vendor/palo-alto-networks/
 ---
 
-# Vpn Client Endpoint Software
+# Palo Alto Networks
 
 *1 item(s) across all editions.*
 
-## Palo Alto
+## VPN gateways
+
+- 🟡 [CVE-2026-0307 GlobalProtect App: Local Privilege Escalation Vulnerabilities (Severity: MEDIUM)](https://security.paloaltonetworks.com/CVE-2026-0307) — CVE-2026-0307  
+  <small>2026-09-17 · Palo Alto Networks PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
+
+## Other
 
 - 🟡 [CVE-2026-0307 GlobalProtect App: Local Privilege Escalation Vulnerabilities (Severity: MEDIUM)](https://security.paloaltonetworks.com/CVE-2026-0307) — CVE-2026-0307  
   <small>2026-09-17 · Palo Alto Networks PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>

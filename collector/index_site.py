@@ -27,6 +27,49 @@ DEVICE_ORDER = ["firewall", "vpn-gateway", "router", "switch", "wireless", "load
                 "sdwan", "management-platform", "other"]
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 
+# Vendor names arrive from two eras and two writers: the collector's internal lowercase keys
+# and whatever the model typed. Canonicalise so "cisco" and "Cisco" are one page.
+VENDOR_CANON = {
+    "cisco": "Cisco", "cisco systems": "Cisco", "fortinet": "Fortinet",
+    "palo alto": "Palo Alto Networks", "palo alto networks": "Palo Alto Networks",
+    "pan-os": "Palo Alto Networks", "check point": "Check Point", "checkpoint": "Check Point",
+    "juniper": "Juniper Networks", "juniper networks": "Juniper Networks",
+    "f5": "F5", "f5 networks": "F5", "citrix": "Citrix", "ivanti": "Ivanti",
+    "sonicwall": "SonicWall", "sophos": "Sophos", "watchguard": "WatchGuard",
+    "hpe aruba": "HPE Aruba Networking", "aruba": "HPE Aruba Networking",
+    "hpe aruba networking": "HPE Aruba Networking", "arista": "Arista Networks",
+    "arista networks": "Arista Networks", "extreme": "Extreme Networks",
+    "extreme networks": "Extreme Networks", "mikrotik": "MikroTik", "ubiquiti": "Ubiquiti",
+    "netgear": "NETGEAR", "tp-link": "TP-Link", "tplink": "TP-Link", "d-link": "D-Link",
+    "dlink": "D-Link", "zyxel": "Zyxel", "barracuda": "Barracuda", "huawei": "Huawei",
+    "asus": "ASUS", "nokia": "Nokia", "draytek": "DrayTek", "qnap-synology-edge": "QNAP / Synology",
+    "vpn-gateways": "Multiple", "telco-core": "Multiple", "multiple": "Multiple",
+    "unspecified": "Unspecified", "": "Unspecified",
+}
+
+# Editions published before device_types was constrained to an enum used free text.
+DEVICE_CANON = {
+    "vpn": "vpn-gateway", "vpn gateway": "vpn-gateway", "mgmt-protocols": "management-platform",
+    "firewall management platform": "management-platform",
+    "management platform": "management-platform", "ips": "firewall",
+    "perimeter appliance": "firewall", "email security gateway": "other",
+    "vpn client endpoint software": "other", "unified communications / pbx server": "other",
+    "voice infrastructure": "other", "network infrastructure generally": "other",
+    "ot-network": "other", "generic": "other",
+}
+
+
+def canon_vendor(name: str) -> str:
+    key = (name or "").strip().lower()
+    return VENDOR_CANON.get(key, (name or "Unspecified").strip())
+
+
+def canon_device(name: str) -> str:
+    key = (name or "").strip().lower()
+    if key in DEVICE_LABEL and key not in DEVICE_CANON:
+        return key
+    return DEVICE_CANON.get(key, key if key in DEVICE_LABEL else "other")
+
 
 def slug(text: str) -> str:
     return SLUG_RE.sub("-", text.lower()).strip("-")
@@ -47,6 +90,10 @@ def read_index() -> list[dict]:
         for entry in data.get("entries", []):
             entry["post_url"] = data.get("url", "")
             entry["date"] = data.get("date", "")
+            entry["vendors"] = sorted({canon_vendor(v) for v in (entry.get("vendors") or [])
+                                       if v}) or ["Unspecified"]
+            entry["device_types"] = sorted({canon_device(d) for d in
+                                            (entry.get("device_types") or [])}) or ["other"]
             entries.append(entry)
     return entries
 
@@ -98,7 +145,7 @@ def build() -> list[Path]:
             for v in e.get("vendors") or ["(vendor not identified)"]:
                 grouped[v].append(e)
         for vendor in sorted(grouped):
-            body += [f"## {vendor.title()}", ""]
+            body += [f"## {vendor}", ""]
             body += [entry_line(e) for e in sorted(grouped[vendor],
                                                    key=lambda x: x.get("date", ""), reverse=True)]
             body += [""]
@@ -120,7 +167,7 @@ def build() -> list[Path]:
                                                    key=lambda x: x.get("date", ""), reverse=True)]
             body += [""]
         path = BROWSE / f"vendor-{slug(vendor)}.md"
-        path.write_text(page(vendor.title(), body, f"/browse/vendor/{slug(vendor)}/"))
+        path.write_text(page(vendor, body, f"/browse/vendor/{slug(vendor)}/"))
         written.append(path)
 
     # The browse hub.
@@ -129,7 +176,7 @@ def build() -> list[Path]:
         devices = ", ".join(sorted({DEVICE_LABEL.get(d, d)
                                     for e in by_vendor[vendor]
                                     for d in (e.get("device_types") or ["other"])}))
-        body.append(f"- [{vendor.title()}]({{{{ '/browse/vendor/{slug(vendor)}/' | relative_url }}}}) "
+        body.append(f"- [{vendor}]({{{{ '/browse/vendor/{slug(vendor)}/' | relative_url }}}}) "
                     f"({len(by_vendor[vendor])}) <small>{devices}</small>")
     body += ["", "## By device type", ""]
     for device in [d for d in DEVICE_ORDER if d in by_device] + \

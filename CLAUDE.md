@@ -72,6 +72,10 @@ between the collect and render stages. Locally, `analyze.py` calls the API direc
   published project page 404s.
 - **FIRST's EPSS API answers 400, not 429, when batches arrive too fast.** Batches are capped at
   20 CVEs and paced a second apart; failures are logged and skipped, never fatal.
+- **Vendor and device names are canonicalised in `index_site.py`, not trusted as written.**
+  The collector emits lowercase internal keys, the model writes prose names, and editions
+  published before the enum used free text - without `canon_vendor`/`canon_device`, "cisco"
+  and "Cisco" become two browse pages. Add new aliases there, not at the call sites.
 - Artifact upload is `continue-on-error`: the account's artifact quota is full and must never
   fail a digest.
 

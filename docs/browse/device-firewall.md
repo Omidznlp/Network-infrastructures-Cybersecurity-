@@ -6,7 +6,12 @@ permalink: /browse/device/firewall/
 
 # Firewalls
 
-*16 item(s) across all editions.*
+*5 item(s) across all editions.*
+
+## (Vendor Not Identified)
+
+- 🟠 [Securing the unpatchable in an age of AI-driven vulnerabilities](https://blog.talosintelligence.com/securing-the-unpatchable-in-an-age-of-ai-driven-vulnerabilities/)  
+  <small>2026-09-17 · Cisco Talos · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
 
 ## Check Point
 
@@ -19,32 +24,8 @@ permalink: /browse/device/firewall/
 
 ## Cisco
 
-- 🔴 [Cisco Secure Firewall Adaptive Security Appliance, Secure Firewall Threat Defense, and Secure Firewall Management Center Software Hardening Release: September 2026](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-asaftdfmc-uvpPROhN)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software IKEv2 Certificate Authentication Denial of Service Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-ikev2cert-dos-uWyc2xtv)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Management Center Software Java Deserialization Remote Code Execution Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-javarce-y2NypXwk)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Management Center Software Authentication Bypass Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-onprem-fmc-authbypass-5JPp45V2)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Management Center and Secure Firewall Threat Defense Software sftunnel Vulnerabilities](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmcftd-sftun-multivulns-WGVHOrN3)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software EIGRP Denial of Service Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-eigrp-dos-GOhNejSj)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software for Secure Firewall 3100 and 4200 Series DTLS Denial of Service Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-dtls-dos-Kp57HkyO)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Remote Access SSL VPN Denial of Service Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-vpn-dos-dzv4mQFF)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software SSL VPN Denial of Service Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftdvirtual-dos-MuenGnYR)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Management Center Software Static Credential Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-fmc-static-cred-BET3Cjh)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Logging Denial of Service Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asa-ftd-logging-dos-ZXXNesfN)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software Object Group Access Control List Bypass Vulnerabilities](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ftd-acl-bypass-8p6vFvw)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
-- 🟠 [Cisco Secure Firewall Threat Defense Software Snort 2 SSL/TLS Denial of Service Vulnerability](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-ftd-snort2-ssldos-Mw7WYX9c)  
-  <small>2026-09-17 · Cisco PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
+- 🟠 [ZDI-26-709: Cisco Secure Firewall Management Center CommandSinkRmi Deserialization of Untrusted Data Remote Code Execution Vulnerability](http://www.zerodayinitiative.com/advisories/ZDI-26-709/) — CVE-2026-20242  
+  <small>2026-09-17 · Zero Day Initiative · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
 
 
 <p><a href="{{ "/" | relative_url }}">← All editions</a> · <a href="{{ "/browse/" | relative_url }}">Browse index</a></p>

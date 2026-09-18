@@ -1,10 +1,10 @@
 ---
 layout: default
-title: "VPN gateways"
-permalink: /browse/device/vpn/
+title: "Vpn Client Endpoint Software"
+permalink: /browse/device/vpn-client-endpoint-software/
 ---
 
-# VPN gateways
+# Vpn Client Endpoint Software
 
 *1 item(s) across all editions.*
 

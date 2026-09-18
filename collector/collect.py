@@ -18,7 +18,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent.parent
-UA = "netsec-digest/1.0 (+https://github.com/Omidznlp/Network-infrastructures-Cybersecurity-)"
+UA = "netsec-digest/1.0 (+https://github.com/Omidznlp/network-security-news)"
 CVE_RE = re.compile(r"CVE-\d{4}-\d{4,7}", re.I)
 TAG_RE = re.compile(r"<[^>]+>")
 WS_RE = re.compile(r"\s+")

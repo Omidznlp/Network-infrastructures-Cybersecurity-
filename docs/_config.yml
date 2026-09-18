@@ -3,7 +3,7 @@ title: Network Infrastructure Cybersecurity
 # or every generated link resolves to the wrong path. Clear both if you ever move
 # the site to a user page (omidznlp.github.io) or a custom domain.
 url: "https://omidznlp.github.io"
-baseurl: "/Network-infrastructures-Cybersecurity-"
+baseurl: "/network-security-news"
 description: >-
   Daily security intelligence for network devices — firewalls, VPN gateways, routers,
   switches, wireless controllers and load balancers. Filtered, triaged and turned into

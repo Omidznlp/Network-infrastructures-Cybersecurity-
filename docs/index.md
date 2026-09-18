@@ -13,7 +13,7 @@ Every edition leads with **how AI is being used to attack (and defend) network d
 
 Sources: vendor PSIRT advisories, CISA / NCSC, threat-intel research blogs and the security
 press, enriched with the **CISA KEV** catalog and **FIRST EPSS** exploit-probability scores.
-Full source list: [SOURCES.md](https://github.com/Omidznlp/Network-infrastructures-Cybersecurity-/blob/main/SOURCES.md)
+Full source list: [SOURCES.md](https://github.com/Omidznlp/network-security-news/blob/main/SOURCES.md)
 
 ---
 

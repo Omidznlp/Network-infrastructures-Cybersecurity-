@@ -1,18 +1,29 @@
 # Network Infrastructure Cybersecurity
 
-Automated security intelligence for **network devices** — firewalls, VPN gateways, routers,
-switches, wireless controllers, load balancers and SD-WAN edge. It collects security news and
-vendor advisories, throws away everything that is not about network infrastructure, triages what
-is left with Claude, and turns each story into **concrete upgrade and hardening actions** for
-both current and legacy systems.
+### 👉 **[Read it here: omidznlp.github.io/network-security-news](https://omidznlp.github.io/network-security-news/)**
 
-Every edition leads with a headline on **how AI impacts or attacks network devices, and how to
-prevent it**.
+Daily security intelligence for **network devices** — firewalls, VPN gateways, routers, switches,
+wireless controllers, load balancers and SD-WAN edge. Every vulnerability that matters to the
+people who run the network, with the upgrade and hardening actions to take, for current *and*
+legacy systems.
 
-Nothing publishes itself: each run opens a **pull request** for review. Merging to `main`
-publishes the edition to the GitHub Pages site.
+| | |
+|---|---|
+| 🗞️ **Latest editions** | [omidznlp.github.io/network-security-news](https://omidznlp.github.io/network-security-news/) |
+| 🏢 **Browse by vendor** | [Cisco, Fortinet, Palo Alto, Check Point…](https://omidznlp.github.io/network-security-news/browse/) |
+| 🧠 **AI & network devices** | [AI-assisted attacks, AI on network gear](https://omidznlp.github.io/network-security-news/browse/ai/) |
+| 📡 **Subscribe** | [RSS feed](https://omidznlp.github.io/network-security-news/feed.xml) |
+
+**This repository is the machinery behind that site.** If you came here to read the news,
+use the links above — everything below is for maintaining the pipeline.
+
+---
+
+<details>
+<summary><strong>How the pipeline works (click to expand)</strong></summary>
 
 ## How it works
+
 
 ```
  schedule (hourly + daily)
@@ -120,3 +131,5 @@ SOURCES.md      full source list, including LinkedIn pages to follow
 The model is instructed never to invent CVE IDs, version numbers or patch levels — if the source
 does not state a fixed release, the digest says to check the vendor advisory. **Verify every
 version against the vendor's own advisory before scheduling a change.**
+
+</details>

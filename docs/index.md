@@ -15,6 +15,9 @@ Sources: vendor PSIRT advisories, CISA / NCSC, threat-intel research blogs and t
 press, enriched with the **CISA KEV** catalog and **FIRST EPSS** exploit-probability scores.
 Full source list: [SOURCES.md](https://github.com/Omidznlp/network-security-news/blob/main/SOURCES.md)
 
+**[📡 Subscribe by RSS]({{ '/feed.xml' | relative_url }})** — new editions arrive in your reader;
+no need to check back.
+
 ---
 
 ## Browse by device type and vendor

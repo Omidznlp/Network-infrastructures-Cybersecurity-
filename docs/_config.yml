@@ -16,3 +16,16 @@ defaults:
   - scope: {path: "", type: "posts"}
     values: {layout: "post"}
 exclude: [README.md]
+
+# GitHub Pages runs these without any build step of ours:
+#   jekyll-feed    -> /feed.xml      so readers can subscribe instead of remembering to visit
+#   jekyll-sitemap -> /sitemap.xml   so search engines can index every edition
+#   jekyll-seo-tag -> <meta> tags    so shared links show a title and description
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+author: Omidznlp
+twitter:
+  card: summary

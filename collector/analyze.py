@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,6 +36,10 @@ Rules:
 - Recommendations must be concrete actions a network engineer can execute: upgrade paths, \
   management-plane restrictions, credential rotation, segmentation, detection queries.
 - Always give separate advice for legacy/end-of-life gear that cannot be patched.
+- Lead with the day's most consequential story, not with AI. Populate the AI section only when a
+  collected item genuinely concerns AI; otherwise set has_new_ai false and the last real AI
+  section is carried forward with its date. Never manufacture an AI angle to fill the slot.
+- Name the vendor as the vendor writes it, and use only the schema's fixed device-type list.
 - Be terse. No marketing language, no filler."""
 
 SCHEMA = json.loads((ROOT / "config" / "analysis_schema.json").read_text())
@@ -75,6 +80,14 @@ def rule_based(payload: dict) -> dict:
     """Deterministic fallback - no model required."""
     kw = json.loads((ROOT / "config" / "keywords.json").read_text())
     pb = kw["playbooks"]
+    # Map the collector's internal category names onto the schema's fixed device enum.
+    DEVICE_MAP = {"firewall": "firewall", "vpn": "vpn-gateway", "router": "router",
+                  "switch": "switch", "wireless": "wireless", "load-balancer": "load-balancer",
+                  "sdwan": "sdwan", "mgmt-protocols": "management-platform",
+                  "ot-network": "other", "generic": "other"}
+    hot = {"actively exploited", "in the wild", "zero-day", "0-day",
+           "known exploited", "emergency directive"}
+
     out_items = []
     for idx, item in enumerate(payload["items"][:MAX_ITEMS]):
         cats = item["categories"] or ["generic"]
@@ -82,8 +95,6 @@ def rule_based(payload: dict) -> dict:
         for cat in cats:
             actions += pb.get(cat, [])
         actions = list(dict.fromkeys(actions or pb["generic"]))[:5]
-        hot = {"actively exploited", "in the wild", "zero-day", "0-day",
-               "known exploited", "emergency directive"}
         if item["kev"] or hot & set(item["urgency"]):
             rel = "critical"
         elif item["score"] >= 14 or "unauthenticated" in item["urgency"]:
@@ -93,8 +104,10 @@ def rule_based(payload: dict) -> dict:
         else:
             rel = "watch"
         out_items.append({
-            "id": idx, "relevance": rel, "device_types": cats,
-            "affected": ", ".join(item["vendors"]) or "see advisory",
+            "id": idx, "relevance": rel,
+            "vendor": (item["vendors"][0].title() if item["vendors"] else "Unspecified"),
+            "device_types": sorted({DEVICE_MAP.get(c, "other") for c in cats}),
+            "affected": ", ".join(v.title() for v in item["vendors"]) or "see advisory",
             "what_happened": item["summary"][:400] or item["title"],
             "why_it_matters": ("Listed on the CISA KEV catalog - exploitation is confirmed."
                                if item["kev"] else
@@ -103,22 +116,24 @@ def rule_based(payload: dict) -> dict:
             "legacy_advice": pb["legacy"][0],
             "detection": "", "ai_angle": "AI/ML mentioned in the source." if item["ai_related"] else "",
         })
+
+    worst = out_items[0] if out_items else None
     return {
-        "headline": {
-            "title": "AI and network devices: standing guidance",
-            "body": ("No model summary was generated for this edition (ANTHROPIC_API_KEY not set), "
-                     "so this section carries the standing guidance. AI shortens the gap between a "
-                     "public advisory and mass exploitation of internet-facing network devices, and it "
-                     "adds a new privileged surface wherever an assistant or agent can read device "
-                     "state or push configuration."),
-            "prevention_modern": pb["ai"],
-            "prevention_legacy": pb["legacy"],
+        "top_story": {
+            "title": (payload["items"][0]["title"] if payload["items"]
+                      else "No network device news in this window"),
+            "body": (worst["what_happened"] if worst else
+                     "No advisory or report in this window concerned network infrastructure devices."),
+            "actions_now": worst["actions"] if worst else [],
         },
+        # No model ran, so there is no new AI reading; the carry-forward step fills this.
+        "ai_section": {"has_new_ai": False, "title": "", "body": "",
+                       "prevention_modern": [], "prevention_legacy": []},
         "executive_summary": [
             f"{len(payload['items'])} network-device items collected in the last "
             f"{payload['window_hours']}h from {payload['stats']['feeds_ok']} feeds.",
             f"{sum(1 for i in payload['items'] if i['kev'])} item(s) reference CISA KEV entries.",
-            "Model summarization disabled - rule-based advice shown.",
+            "Model summarization unavailable - rule-based advice shown.",
         ],
         "items": out_items,
         "analysis_mode": "rule-based",
@@ -156,20 +171,23 @@ def with_claude(payload: dict) -> dict:
 
 def analyze(payload: dict) -> dict:
     if not payload.get("items"):
-        return {"headline": {"title": "No network-device stories in this window",
-                             "body": "No item cleared the relevance threshold.",
-                             "prevention_modern": [], "prevention_legacy": []},
-                "executive_summary": ["Nothing to report."], "items": [], "analysis_mode": "empty"}
+        return carry_forward_ai({
+            "top_story": {"title": "No network device security news in this window",
+                          "body": "No advisory or report in the sources concerned network "
+                                  "infrastructure devices.", "actions_now": []},
+            "ai_section": {"has_new_ai": False, "title": "", "body": "",
+                           "prevention_modern": [], "prevention_legacy": []},
+            "executive_summary": ["Nothing to report."], "items": [], "analysis_mode": "empty"})
     if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
         log("no API key - using rule-based fallback")
-        return rule_based(payload)
+        return carry_forward_ai(rule_based(payload))
     try:
-        return with_claude(payload)
+        return carry_forward_ai(with_claude(payload))
     except Exception as exc:
         log(f"model call failed ({exc.__class__.__name__}: {exc}) - falling back to rules")
         out = rule_based(payload)
         out["analysis_mode"] = f"rule-based (model error: {exc.__class__.__name__})"
-        return out
+        return carry_forward_ai(out)
 
 
 if __name__ == "__main__":
@@ -178,23 +196,29 @@ if __name__ == "__main__":
 
 REQUIRED_ITEM_KEYS = set(SCHEMA["properties"]["items"]["items"]["required"])
 RELEVANCE = set(SCHEMA["properties"]["items"]["items"]["properties"]["relevance"]["enum"])
+DEVICE_ENUM = set(SCHEMA["properties"]["items"]["items"]["properties"]["device_types"]["items"]["enum"])
+AI_STORE = ROOT / "data" / "ai_section.json"
 
 
 def validate(result: object, item_count: int) -> dict:
-    """Validate an analysis produced outside this process (e.g. by the Claude Code Action).
-
-    Raises ValueError with a specific reason; callers fall back to rule-based advice.
-    """
+    """Validate an analysis produced outside this process (e.g. by the Claude Code Action)."""
     if not isinstance(result, dict):
         raise ValueError("analysis is not a JSON object")
-    head = result.get("headline")
-    if not isinstance(head, dict):
-        raise ValueError("missing headline object")
-    for key in ("title", "body", "prevention_modern", "prevention_legacy"):
-        if key not in head:
-            raise ValueError(f"headline missing '{key}'")
+
+    top = result.get("top_story")
+    if not isinstance(top, dict) or not top.get("title") or not top.get("body"):
+        raise ValueError("top_story missing title or body")
+    top.setdefault("actions_now", [])
+
+    ai = result.get("ai_section")
+    if not isinstance(ai, dict) or "has_new_ai" not in ai:
+        raise ValueError("ai_section missing has_new_ai")
+    if ai["has_new_ai"] and not ai.get("body"):
+        raise ValueError("ai_section claims new AI content but has no body")
+
     if not isinstance(result.get("executive_summary"), list):
         raise ValueError("executive_summary must be a list")
+
     items = result.get("items")
     if not isinstance(items, list):
         raise ValueError("items must be a list")
@@ -208,8 +232,38 @@ def validate(result: object, item_count: int) -> dict:
             raise ValueError(f"item {pos} has invalid relevance {item['relevance']!r}")
         if not isinstance(item["id"], int) or not 0 <= item["id"] < item_count:
             raise ValueError(f"item {pos} has out-of-range id {item['id']!r}")
+        bad = [d for d in item["device_types"] if d not in DEVICE_ENUM]
+        if bad:
+            raise ValueError(f"item {pos} has device types outside the enum: {bad}")
         if not isinstance(item["actions"], list):
             raise ValueError(f"item {pos} actions must be a list")
+    return result
+
+
+def carry_forward_ai(result: dict) -> dict:
+    """Keep the AI section meaningful on days with no AI news.
+
+    A fresh section is stored; on a day with none, the stored one is reused and stamped
+    with the date it was written so it is never presented as today's reporting.
+    """
+    ai = result.get("ai_section") or {"has_new_ai": False}
+    if ai.get("has_new_ai") and ai.get("body"):
+        ai["written"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        ai["carried_forward"] = False
+        AI_STORE.parent.mkdir(parents=True, exist_ok=True)
+        AI_STORE.write_text(json.dumps(ai, indent=2))
+        log(f"stored new AI section: {ai.get('title', '')[:60]}")
+    else:
+        try:
+            stored = json.loads(AI_STORE.read_text())
+            stored["carried_forward"] = True
+            result["ai_section"] = stored
+            log(f"no new AI content - carrying forward section from {stored.get('written')}")
+        except (FileNotFoundError, json.JSONDecodeError):
+            result["ai_section"] = {"has_new_ai": False, "carried_forward": False,
+                                    "title": "", "body": "",
+                                    "prevention_modern": [], "prevention_legacy": []}
+            log("no new AI content and nothing stored to carry forward")
     return result
 
 
@@ -219,11 +273,11 @@ def load_external(path: Path, payload: dict) -> dict:
         result = validate(json.loads(path.read_text()), len(payload["items"][:MAX_ITEMS]))
         result.setdefault("analysis_mode", "claude-code-action")
         log(f"external analysis accepted: {len(result['items'])} items")
-        return result
+        return carry_forward_ai(result)
     except FileNotFoundError:
         log(f"{path} not found - falling back to rules")
     except (ValueError, json.JSONDecodeError) as exc:
         log(f"external analysis rejected ({exc}) - falling back to rules")
     out = rule_based(payload)
     out["analysis_mode"] = "rule-based (agent output unusable)"
-    return out
+    return carry_forward_ai(out)

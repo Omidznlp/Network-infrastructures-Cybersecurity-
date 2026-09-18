@@ -8,6 +8,7 @@ import json
 import re
 import ssl
 import sys
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field, asdict
@@ -252,15 +253,19 @@ def load_epss(cves: list[str], url: str) -> dict:
     if not cves:
         return {}
     scores: dict[str, float] = {}
-    for i in range(0, len(cves), 50):
-        chunk = ",".join(cves[i:i + 50])
+    # EPSS answers 400 (not 429) when a burst of batches arrives too quickly, so keep the
+    # batches small and pace them. It is optional enrichment - a failure must never be fatal.
+    for i in range(0, len(cves), 20):
+        if i:
+            time.sleep(1.0)
+        chunk = ",".join(cves[i:i + 20])
         try:
             data = json.loads(http_get(f"{url}{chunk}", timeout=30))
             for row in data.get("data", []):
                 scores[row["cve"].upper()] = float(row.get("epss", 0))
         except Exception as exc:
-            log(f"EPSS fetch failed: {exc}")
-            break
+            log(f"EPSS batch failed ({exc}) - continuing without it")
+            continue
     return scores
 
 

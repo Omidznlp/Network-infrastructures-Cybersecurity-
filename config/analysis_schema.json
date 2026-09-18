@@ -1,16 +1,43 @@
 {
   "type": "object",
   "properties": {
-    "headline": {
+    "top_story": {
       "type": "object",
-      "description": "The AI-and-network-devices lead story for this edition.",
+      "description": "The day's most consequential network-device story. Usually the item with confirmed exploitation or the widest blast radius.",
       "properties": {
         "title": {
           "type": "string"
         },
         "body": {
           "type": "string",
-          "description": "2-4 paragraphs on how AI is being used to attack or defend network devices this cycle, grounded in the supplied items. If no item touches AI, explain the week's dominant network-device risk pattern through an AI lens without inventing incidents."
+          "description": "2-4 paragraphs: what happened, which devices, why it matters, what to do first."
+        },
+        "actions_now": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "body",
+        "actions_now"
+      ],
+      "additionalProperties": false
+    },
+    "ai_section": {
+      "type": "object",
+      "description": "AI and network devices. Only populate when a collected item genuinely concerns AI (AI-assisted attacks or discovery, AI/LLM integrations on network gear, prompt injection against network management). If nothing in today's items qualifies, set has_new_ai to false and leave the other fields empty - the site carries forward the last real one, dated.",
+      "properties": {
+        "has_new_ai": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
         },
         "prevention_modern": {
           "type": "array",
@@ -26,6 +53,7 @@
         }
       },
       "required": [
+        "has_new_ai",
         "title",
         "body",
         "prevention_modern",
@@ -37,8 +65,7 @@
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "3-6 bullets: what changed for the network team today."
+      }
     },
     "items": {
       "type": "array",
@@ -46,8 +73,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "description": "index of the input item"
+            "type": "integer"
           },
           "relevance": {
             "type": "string",
@@ -59,15 +85,30 @@
               "drop"
             ]
           },
+          "vendor": {
+            "type": "string",
+            "description": "Primary vendor, as the vendor writes it: Cisco, Fortinet, Palo Alto Networks, Juniper, F5, Citrix, Ivanti, Check Point, SonicWall, Sophos, HPE Aruba, Arista, MikroTik, Ubiquiti, Zyxel, NETGEAR, TP-Link, D-Link, WatchGuard, Barracuda, Extreme Networks. Use 'Multiple' for several, 'Unspecified' when none is named."
+          },
           "device_types": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "firewall",
+                "vpn-gateway",
+                "router",
+                "switch",
+                "wireless",
+                "load-balancer",
+                "sdwan",
+                "management-platform",
+                "other"
+              ]
+            },
+            "description": "Pick from the fixed list only. A firewall management server is 'management-platform'. A mail or web security appliance is 'other'."
           },
           "affected": {
-            "type": "string",
-            "description": "Vendor/product/versions exactly as stated in the source."
+            "type": "string"
           },
           "what_happened": {
             "type": "string"
@@ -79,24 +120,22 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "description": "Ordered, concrete remediation steps."
+            }
           },
           "legacy_advice": {
             "type": "string"
           },
           "detection": {
-            "type": "string",
-            "description": "What to hunt for in logs/flows, or empty string."
+            "type": "string"
           },
           "ai_angle": {
-            "type": "string",
-            "description": "AI relevance, or empty string."
+            "type": "string"
           }
         },
         "required": [
           "id",
           "relevance",
+          "vendor",
           "device_types",
           "affected",
           "what_happened",
@@ -111,7 +150,8 @@
     }
   },
   "required": [
-    "headline",
+    "top_story",
+    "ai_section",
     "executive_summary",
     "items"
   ],

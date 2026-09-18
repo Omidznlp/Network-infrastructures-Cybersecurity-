@@ -16,13 +16,15 @@ POSTS = ROOT / "docs" / "_posts"
 BROWSE = ROOT / "docs" / "browse"
 
 DEVICE_LABEL = {
-    "firewall": "Firewalls", "vpn": "VPN gateways", "router": "Routers", "switch": "Switches",
-    "wireless": "Wireless", "load-balancer": "Load balancers", "sdwan": "SD-WAN / SASE",
-    "mgmt-protocols": "Management protocols", "ot-network": "OT / industrial network",
-    "generic": "Other network devices",
+    "firewall": "Firewalls", "vpn-gateway": "VPN gateways", "router": "Routers",
+    "switch": "Switches", "wireless": "Wireless", "load-balancer": "Load balancers",
+    "sdwan": "SD-WAN / SASE", "management-platform": "Management platforms", "other": "Other",
+    # legacy names from editions published before the enum was fixed
+    "vpn": "VPN gateways", "mgmt-protocols": "Management platforms",
+    "ot-network": "Other", "generic": "Other",
 }
-DEVICE_ORDER = ["firewall", "vpn", "router", "switch", "wireless", "load-balancer",
-                "sdwan", "mgmt-protocols", "ot-network", "generic"]
+DEVICE_ORDER = ["firewall", "vpn-gateway", "router", "switch", "wireless", "load-balancer",
+                "sdwan", "management-platform", "other"]
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
@@ -122,19 +124,22 @@ def build() -> list[Path]:
         written.append(path)
 
     # The browse hub.
-    body = ["Pick a device type, or jump straight to a vendor.", "", "## By device type", ""]
+    body = ["Pick a vendor, or browse by device type.", "", "## By vendor", ""]
+    for vendor in sorted(by_vendor):
+        devices = ", ".join(sorted({DEVICE_LABEL.get(d, d)
+                                    for e in by_vendor[vendor]
+                                    for d in (e.get("device_types") or ["other"])}))
+        body.append(f"- [{vendor.title()}]({{{{ '/browse/vendor/{slug(vendor)}/' | relative_url }}}}) "
+                    f"({len(by_vendor[vendor])}) <small>{devices}</small>")
+    body += ["", "## By device type", ""]
     for device in [d for d in DEVICE_ORDER if d in by_device] + \
                   [d for d in sorted(by_device) if d not in DEVICE_ORDER]:
         vendors = ", ".join(sorted(v.title() for v in device_vendors[device])[:8]) or "—"
         body.append(f"- [{DEVICE_LABEL.get(device, device.title())}]"
                     f"({{{{ '/browse/device/{slug(device)}/' | relative_url }}}}) "
                     f"({len(by_device[device])}) <small>{vendors}</small>")
-    body += ["", "## By vendor", ""]
-    for vendor in sorted(by_vendor):
-        body.append(f"- [{vendor.title()}]({{{{ '/browse/vendor/{slug(vendor)}/' | relative_url }}}}) "
-                    f"({len(by_vendor[vendor])})")
     hub = BROWSE / "index.md"
-    hub.write_text(page("Browse by device and vendor", body, "/browse/"))
+    hub.write_text(page("Browse by vendor and device", body, "/browse/"))
     written.append(hub)
 
     print(f"[index] {len(entries)} entries -> {len(by_device)} device pages, "

@@ -1,51 +1,46 @@
 {
   "date": "2026-09-18",
   "url": "/2026/09/18/network-security-digest/",
-  "item_count": 25,
-  "critical_count": 5,
+  "item_count": 19,
+  "critical_count": 4,
   "kev": [
-    "CVE-2026-76460",
-    "CVE-2026-87886"
+    "CVE-2026-76460"
   ],
   "feeds_ok": 22,
-  "top_story_title": "Cisco Nexus 9000 Series Switches Silicon One Remote Code Execution Vulnerability",
-  "top_story_summary": "A vulnerability in the Silicon One integration for Cisco Nexus 9000 Series Switches could allow an unauthenticated, remote attacker to execute code with root privileges. This vulnerability exists because TCP ports 43210 and 43211 are accessible in the default Layer 3 (L3) virtual routing and forwarding (VRF). A successful exploit could allow the attacker to connect to an affected device and send c",
+  "top_story_title": "Cisco ISE authentication bypass (CVE-2026-76460, CVSS 10.0) is a KEV zero-day with a 19 September due date",
+  "top_story_summary": "Cisco has disclosed CVE-2026-76460, a maximum-severity authentication bypass in Cisco Identity Services Engine (ISE) and the ISE Passive Identity Connector (ISE-PIC). Cisco attributes it to insufficient authentication control on an API endpoint, which lets an unauthenticated remote attacker reach the device by bypassing the web-based management interface. Cisco says the flaw is under active exploitation. CISA added it to the Known Exploited Vulnerabilities catalogue on 2026-09-16 with a remediation due date of 2026-09-19 and a ransomware status of Unknown.",
   "top_actions": [
-    "Upgrade NOS to the fixed release; validate ISSU/hitless upgrade path for core and distribution switches first.",
-    "Restrict management plane with control-plane policing and management ACLs; move to out-of-band management.",
-    "Disable unused ports, set unused ports to an unrouted VLAN, and enforce 802.1X or MAC authentication on access ports.",
-    "Harden SNMP (v3 with auth+priv only, no public/private community strings) and disable legacy protocols.",
-    "Segment management, user, guest and OT traffic; verify VLAN ACLs and private VLAN enforcement."
+    "Inventory every ISE and ISE-PIC node, including standalone, primary/secondary admin, and monitoring personas, and record the running patch level against Cisco's fixed-release table in the advisory for CVE-2026-76460.",
+    "Remove the ISE admin and API interfaces from any internet-facing or untrusted path immediately; restrict to a dedicated management VLAN or out-of-band network with an ACL naming the specific jump hosts and NAC integrations that need access.",
+    "Upgrade to the fixed release named in the Cisco advisory - check the vendor advisory for the fixed release rather than assuming the latest patch bundle covers it. CISA's KEV due date for this CVE is 2026-09-19.",
+    "After patching, rotate what the platform holds: ISE admin credentials, RADIUS and TACACS+ shared secrets, pKI/EAP certificates, ERS and OpenAPI keys, and any service accounts ISE uses to bind to AD or LDAP.",
+    "Hunt for pre-patch compromise: unexpected administrator or internal-user accounts, new or altered authorisation policies and rule ordering, changed network device groups, new device admin entries, and API calls to endpoints from source addresses outside your management ranges."
   ],
   "executive_summary": [
-    "68 network-device items collected in the last 72h from 22 feeds.",
-    "3 item(s) reference CISA KEV entries.",
-    "Model summarization unavailable - rule-based advice shown."
+    "Cisco ISE and ISE-PIC carry an actively exploited, unauthenticated authentication bypass (CVE-2026-76460, CVSS 10.0), added to CISA KEV on 2026-09-16 with a 2026-09-19 due date - patch the identity plane first.",
+    "Cisco's September 2026 ASA/FTD/FMC hardening release includes two Firewall Management Center flaws that Cisco says are already being exploited: a static credential issue and an authentication bypass.",
+    "Six further Cisco ASA/FTD advisories landed in the same window - IKEv2 certificate DoS, DTLS DoS on 3100/4200, EIGRP memory leak, syslog rate-limit CPU exhaustion, TCP DNS reload, and an Object Group Search ACL bypass that silently lets blocked traffic through.",
+    "Check Point Security Management and Log Servers have a critical unauthenticated RCE as root, fixed via LivePatch; Check Point reports no indication of exploitation. It is the firewall policy and admin-access controller, so treat it with management-platform urgency.",
+    "ZDI published three authenticated Cisco ISE issues (CVE-2026-20176 command injection RCE, CVE-2026-20211 deserialization RCE, CVE-2026-20235 XXE information disclosure) - secondary to the bypass, but they chain with it.",
+    "Cisco Secure Email Gateway (AsyncOS) has an unauthenticated SQL injection reachable by a crafted email that leads to command execution as root; no workarounds.",
+    "No vendor announced a named defensive AI capability in this window. Check Point Research did publish an AI threat digest documenting the first end-to-end agentic ransomware campaign."
   ],
   "key_actions": [
-    "**Cisco** \u2014 Identify affected devices from your asset inventory, filtered by model and running version.",
-    "**Cisco** \u2014 Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.",
-    "**Cisco** \u2014 Confirm the running version against the vendor's fixed-release table; schedule the upgrade inside the change window, HA pair secondary first.",
-    "**Cisco** \u2014 Remove management access (HTTPS/SSH/API) from any untrusted or internet-facing interface; restrict to a dedicated management VLAN or out-of-band network.",
-    "**Cisco** \u2014 Identify affected devices from your asset inventory, filtered by model and running version.",
-    "**Cisco** \u2014 Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet.",
-    "**Cisco** \u2014 Identify affected devices from your asset inventory, filtered by model and running version.",
-    "**Cisco** \u2014 Apply the vendor fixed release, or the documented workaround if a maintenance window is not available yet."
+    "**Cisco** \u2014 Confirm the running ASA, FTD and FMC versions against Cisco's fixed-release table in the hardening advisory and the two FMC advisories it references; schedule the upgrade inside the change window, HA pair secondary first.",
+    "**Cisco** \u2014 Patch FMC before the managed firewalls - the exploited issues are in the management platform.",
+    "**Cisco** \u2014 Inventory all ISE and ISE-PIC nodes across every persona and confirm running versions against Cisco's fixed-release table for CVE-2026-76460.",
+    "**Cisco** \u2014 Restrict the ISE admin and API interfaces to a dedicated management VLAN or out-of-band network, with an ACL naming only the jump hosts and integrations that need reach; remove any internet or untrusted-zone exposure now, before the patch window.",
+    "**Cisco** \u2014 Treat this as the same remediation as CVE-2026-76460 above - do not schedule it twice; patch ISE to the fixed release in Cisco's advisory.",
+    "**Cisco** \u2014 Because exploitation is confirmed, assume any ISE node that was reachable from an untrusted network before patching may have been touched, and run the compromise review rather than patching and closing the ticket.",
+    "**Check Point** \u2014 Apply the LivePatch fix to all Security Management and Log Servers now, including standby management servers and any Multi-Domain setups; check the vendor advisory for the fixed release and confirm LivePatch is actually enabled and reporting on each host.",
+    "**Check Point** \u2014 Verify no management or log server is reachable from an untrusted network; restrict management access to a dedicated management VLAN or out-of-band network with an explicit host allowlist."
   ],
   "ai_defenses": [],
   "headlines": [
     {
-      "title": "CISA Adds Two Known Exploited Vulnerabilities to Catalog",
-      "link": "https://www.cisa.gov/news-events/alerts/2026/09/16/cisa-adds-two-known-exploited-vulnerabilities-catalog",
-      "summary": "CISA has added two new vulnerabilities to its Known Exploited Vulnerabilities (KEV) Catalog , based on evidence of active exploitation.",
-      "relevance": "critical",
-      "vendor": "Cisco",
-      "source": "CISA Advisories"
-    },
-    {
       "title": "Cisco Secure Firewall Adaptive Security Appliance, Secure Firewall Threat Defense, and Secure Firewall Management Center Software Hardening Release: September 2026",
       "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-asaftdfmc-uvpPROhN",
-      "summary": "As part of Cisco's ongoing commitment to proactive security and product quality, the Cisco Secure Firewall Adaptive Security Appliance (ASA) Software, Cisco Secure Firewall Threat Defense\u2026",
+      "summary": "Cisco's September 2026 hardening release for ASA, FTD and FMC fixes multiple internally found flaws, two of which are already being exploited against Firewall Management Center.",
       "relevance": "critical",
       "vendor": "Cisco",
       "source": "Cisco PSIRT"
@@ -53,7 +48,7 @@
     {
       "title": "Cisco Zero-Day Highlights API Endpoint Authentication Issues",
       "link": "https://www.darkreading.com/vulnerabilities-threats/cisco-zero-day-api-endpoint-authentication-issues",
-      "summary": "The authentication bypass flaw CVE-2026-76460 impacts Cisco's Identity Services Engine (ISE) and received a maximum 10 out of 10 CVSS score.",
+      "summary": "An unauthenticated API endpoint in Cisco Identity Services Engine lets attackers bypass the web management interface entirely; the flaw scores CVSS 10.0 and is on CISA's KEV list.",
       "relevance": "critical",
       "vendor": "Cisco",
       "source": "Dark Reading"
@@ -61,23 +56,31 @@
     {
       "title": "Cisco Warns of New Zero-Day ISE Auth Bypass (CVSS 10.0) Exploited in Active Attacks",
       "link": "https://thehackernews.com/2026/09/cisco-warns-of-new-zero-day-ise-auth.html",
-      "summary": "Cisco has warned of a fresh maximum-severity security flaw impacting Identity Services Engine (ISE) that has come under active exploitation.",
+      "summary": "Cisco confirms active attacks against CVE-2026-76460, a maximum-severity ISE flaw caused by insufficient authentication control on an API endpoint.",
       "relevance": "critical",
       "vendor": "Cisco",
       "source": "The Hacker News"
     },
     {
-      "title": "Cisco Identity Services Engine Hardening Release: September 2026",
-      "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-ise-XU5EwX5T",
-      "summary": "As part of Cisco's ongoing commitment to proactive security and product quality, the Cisco Identity Services Engine (ISE) and Cisco ISE Passive Identity Connector (ISE-PIC) engineering\u2026",
+      "title": "Critical Check Point Management Flaw Lets Unauthenticated Attackers Run Code as Root",
+      "link": "https://thehackernews.com/2026/09/critical-check-point-management-server.html",
+      "summary": "A critical flaw in Check Point Security Management and Log Servers lets an attacker with no credentials run code as root on the system that controls firewall policy and admin access.",
       "relevance": "critical",
+      "vendor": "Check Point",
+      "source": "The Hacker News"
+    },
+    {
+      "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software IKEv2 Certificate Authentication Denial of Service Vulnerability",
+      "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-ikev2cert-dos-uWyc2xtv",
+      "summary": "A crafted certificate during IKEv2 setup can crash the IKEv2 process on Cisco ASA and FTD, reloading the device - unauthenticated, remote, and with no workaround.",
+      "relevance": "high",
       "vendor": "Cisco",
       "source": "Cisco PSIRT"
     },
     {
-      "title": "Cisco Nexus 9000 Series Switches Silicon One Remote Code Execution Vulnerability",
-      "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-n9k-s1-rce-EH8dEtr",
-      "summary": "A vulnerability in the Silicon One integration for Cisco Nexus 9000 Series Switches could allow an unauthenticated, remote attacker to execute code with root privileges.",
+      "title": "Cisco Secure Firewall Adaptive Security Appliance and Secure Firewall Threat Defense Software for Secure Firewall 3100 and 4200 Series DTLS Denial of Service Vulnerability",
+      "link": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-dtls-dos-Kp57HkyO",
+      "summary": "Crafted DTLS traffic can exhaust resources and reload Cisco Secure Firewall 3100 and 4200 Series devices running ASA or FTD software, from an unauthenticated remote source.",
       "relevance": "high",
       "vendor": "Cisco",
       "source": "Cisco PSIRT"

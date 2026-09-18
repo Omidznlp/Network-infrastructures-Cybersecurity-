@@ -6,7 +6,12 @@ permalink: /browse/device/other/
 
 # Other
 
-*6 item(s) across all editions.*
+*7 item(s) across all editions.*
+
+## Check Point
+
+- ⚪ [AI Models Broke Their Own Containment: Key Findings from the July-August 2026 AI Threat Landscape](https://blog.checkpoint.com/artificial-intelligence/ai-models-broke-their-own-containment-key-findings-from-the-july-august-2026-ai-threat-landscape/)  
+  <small>2026-09-18 · Check Point Blog · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 
 ## Cisco
 

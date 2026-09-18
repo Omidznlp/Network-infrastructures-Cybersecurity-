@@ -107,6 +107,10 @@
             },
             "description": "Pick from the fixed list only. A firewall management server is 'management-platform'. A mail or web security appliance is 'other'."
           },
+          "summary": {
+            "type": "string",
+            "description": "One sentence, under 200 characters: what happened and to which device, readable on its own. This is the line someone skims."
+          },
           "affected": {
             "type": "string"
           },
@@ -137,6 +141,7 @@
           "relevance",
           "vendor",
           "device_types",
+          "summary",
           "affected",
           "what_happened",
           "why_it_matters",

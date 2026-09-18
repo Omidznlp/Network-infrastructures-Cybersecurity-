@@ -125,8 +125,10 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
                 out += [
                     f"#### {badge} — {src.get('title', 'Untitled')}",
                     "",
-                    f"*{src.get('source', '?')} · {src.get('published', '')[:10]} · "
-                    f"[source]({tidy_url(src.get('link', '#'))})* {tags}",
+                    f"*[{src.get('source', 'source')}]({tidy_url(src.get('link', '#'))}) · "
+                    f"{src.get('published', '')[:10]}* {tags}",
+                    "",
+                    f"> {analysed.get('summary') or analysed['what_happened'][:190]}",
                     "",
                     f"**Affected:** {analysed['affected']}  ",
                 ]
@@ -155,6 +157,8 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
                     out += [f"**Detection.** {analysed['detection']}", ""]
                 if analysed.get("ai_angle"):
                     out += [f"**AI angle.** {analysed['ai_angle']}", ""]
+                out += [f"📄 **[Read the full report at {src.get('source', 'the source')} →]"
+                        f"({tidy_url(src.get('link', '#'))})**", ""]
         out += ["---", ""]
 
     # AI section: today's if there is real AI news, otherwise the last one, dated.

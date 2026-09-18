@@ -40,6 +40,7 @@ Rules:
   collected item genuinely concerns AI; otherwise set has_new_ai false and the last real AI
   section is carried forward with its date. Never manufacture an AI angle to fill the slot.
 - Name the vendor as the vendor writes it, and use only the schema's fixed device-type list.
+- `summary` is one skimmable sentence under 200 characters, not a restatement of the headline.
 - Be terse. No marketing language, no filler."""
 
 SCHEMA = json.loads((ROOT / "config" / "analysis_schema.json").read_text())
@@ -76,6 +77,19 @@ def build_prompt(payload: dict) -> str:
     return "\n".join(lines)
 
 
+def one_sentence(text: str, limit: int = 190) -> str:
+    """Trim to a sentence or word boundary - never mid-word."""
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    window = text[:limit]
+    stop = max(window.rfind(". "), window.rfind("! "), window.rfind("? "))
+    if stop > limit * 0.4:
+        return window[:stop + 1]
+    cut = window.rfind(" ")
+    return (window[:cut] if cut > 0 else window).rstrip(",;:-") + "…"
+
+
 def rule_based(payload: dict) -> dict:
     """Deterministic fallback - no model required."""
     kw = json.loads((ROOT / "config" / "keywords.json").read_text())
@@ -108,6 +122,7 @@ def rule_based(payload: dict) -> dict:
             "vendor": (item["vendors"][0].title() if item["vendors"] else "Unspecified"),
             "device_types": sorted({DEVICE_MAP.get(c, "other") for c in cats}),
             "affected": ", ".join(v.title() for v in item["vendors"]) or "see advisory",
+            "summary": one_sentence(item["summary"] or item["title"]),
             "what_happened": item["summary"][:400] or item["title"],
             "why_it_matters": ("Listed on the CISA KEV catalog - exploitation is confirmed."
                                if item["kev"] else

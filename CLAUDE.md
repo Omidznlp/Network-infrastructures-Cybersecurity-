@@ -78,6 +78,10 @@ between the collect and render stages. Locally, `analyze.py` calls the API direc
   entries are ingested as items instead.
 - **`docs/_config.yml` needs `baseurl`** matching the repo name, or every link on the
   published project page 404s.
+- **Only the first `DIGEST_MAX_ITEMS` collected entries reach the analyst.** Anything that must
+  be considered has to be inside that window, not merely present in the file. Vendor AI-defence
+  posts score below vendor advisories and were silently never seen; `collect.py` now promotes
+  them past a protected head of the ranking instead of inflating their scores.
 - **FIRST's EPSS API answers 400, not 429, when batches arrive too fast.** Batches are capped at
   20 CVEs and paced a second apart; failures are logged and skipped, never fatal.
 - **Vendor and device names are canonicalised in `index_site.py`, not trusted as written.**

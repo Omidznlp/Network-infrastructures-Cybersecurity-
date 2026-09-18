@@ -382,7 +382,18 @@ def collect(window_hours: int, include_seen: bool = False, persist: bool = True)
             item.tags.append("vendor-advisory")
 
     relevant.sort(key=lambda i: (i.score, i.published), reverse=True)
-    digest = relevant
+
+    # Only the first MAX_ITEMS entries reach the analyst, and vendor AI-defence posts score
+    # below vendor advisories, so they were never seen. Keep the top of the ranking intact and
+    # promote the defence candidates into the window rather than distorting their scores.
+    PROTECTED_HEAD = 20
+    defences = [i for i in relevant if i.ai_defense]
+    if defences:
+        rest = [i for i in relevant if not i.ai_defense]
+        digest = rest[:PROTECTED_HEAD] + defences + rest[PROTECTED_HEAD:]
+        log(f"promoted {len(defences)} AI-defence candidate(s) into the analysis window")
+    else:
+        digest = relevant
 
     now = datetime.now(timezone.utc)
     if persist:

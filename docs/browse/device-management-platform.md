@@ -6,15 +6,15 @@ permalink: /browse/device/management-platform/
 
 # Management platforms
 
-*10 item(s) across all editions.*
+*9 item(s) across all editions.*
 
 ## Check Point
 
 - 🔴 [Critical Check Point Management Flaw Lets Unauthenticated Attackers Run Code as Root](https://thehackernews.com/2026/09/critical-check-point-management-server.html)  
   <small>2026-09-18 · The Hacker News · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
-- 🟠 [Check Point, Kaspersky, Tanium Patch Product Vulnerabilities](https://www.securityweek.com/check-point-kaspersky-tanium-patch-product-vulnerabilities/)  
+- 🟡 [Check Point, Kaspersky, Tanium Patch Product Vulnerabilities](https://www.securityweek.com/check-point-kaspersky-tanium-patch-product-vulnerabilities/)  
   <small>2026-09-18 · SecurityWeek · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
-- 🟠 [New Check Point flaw lets hackers execute code with root privileges](https://www.bleepingcomputer.com/news/security/check-point-warns-critical-flaw-lets-hackers-execute-code-as-root/)  
+- 🟡 [New Check Point flaw lets hackers execute code with root privileges](https://www.bleepingcomputer.com/news/security/check-point-warns-critical-flaw-lets-hackers-execute-code-as-root/)  
   <small>2026-09-18 · BleepingComputer · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 
 ## Cisco
@@ -23,8 +23,6 @@ permalink: /browse/device/management-platform/
   <small>2026-09-18 · Cisco PSIRT · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 - 🔴 [Cisco Zero-Day Highlights API Endpoint Authentication Issues](https://www.darkreading.com/vulnerabilities-threats/cisco-zero-day-api-endpoint-authentication-issues) — CVE-2026-76460 **[KEV]**  
   <small>2026-09-18 · Dark Reading · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
-- 🔴 [Cisco Warns of New Zero-Day ISE Auth Bypass (CVSS 10.0) Exploited in Active Attacks](https://thehackernews.com/2026/09/cisco-warns-of-new-zero-day-ise-auth.html) — CVE-2026-76460 **[KEV]**  
-  <small>2026-09-18 · The Hacker News · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 - 🟠 [ZDI-26-716: Cisco Identity Services Engine createDBLink Command Injection Remote Code Execution Vulnerability](http://www.zerodayinitiative.com/advisories/ZDI-26-716/) — CVE-2026-20176  
   <small>2026-09-18 · Zero Day Initiative · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 - 🟠 [ZDI-26-717: Cisco Identity Services Engine AlarmMessageDiskQueue Deserialization of Untrusted Data Remote Code Execution Vulnerability](http://www.zerodayinitiative.com/advisories/ZDI-26-717/) — CVE-2026-20211  

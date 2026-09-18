@@ -10,7 +10,7 @@ permalink: /browse/device/router/
 
 ## Cisco
 
-- 🟠 [Cisco IOS XR Software Security Hardening Release: September 2026](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-iosxr-qg64NcM)  
+- 🟡 [Cisco IOS XR Software Security Hardening Release: September 2026](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-iosxr-qg64NcM)  
   <small>2026-09-18 · Cisco PSIRT · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 
 

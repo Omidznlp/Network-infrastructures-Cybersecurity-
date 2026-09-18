@@ -1,16 +1,16 @@
 {
-  "at": "2026-09-17T22:35:51.724865+00:00",
+  "at": "2026-09-18T10:57:44.641498+00:00",
   "edition": "daily",
   "stats": {
     "feeds_ok": 18,
     "feeds_failed": 1,
     "raw": 670,
-    "fresh": 100,
-    "on_topic": 8,
-    "digest": 7,
-    "skipped_old": 524,
-    "skipped_seen": 47
+    "fresh": 51,
+    "on_topic": 3,
+    "digest": 3,
+    "skipped_old": 616,
+    "skipped_seen": 3
   },
   "analysis_mode": "claude-code-action",
-  "post": "docs/_posts/2026-09-17-network-security-digest.md"
+  "post": "docs/_posts/2026-09-18-network-security-digest.md"
 }

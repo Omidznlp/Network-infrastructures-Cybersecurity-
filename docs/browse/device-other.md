@@ -6,7 +6,12 @@ permalink: /browse/device/other/
 
 # Other
 
-*6 item(s) across all editions.*
+*8 item(s) across all editions.*
+
+## Check Point
+
+- ⚪ [AI Models Broke Their Own Containment: Key Findings from the July-August 2026 AI Threat Landscape](https://blog.checkpoint.com/artificial-intelligence/ai-models-broke-their-own-containment-key-findings-from-the-july-august-2026-ai-threat-landscape/)  
+  <small>2026-09-18 · Check Point Blog · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 
 ## Cisco
 
@@ -21,6 +26,8 @@ permalink: /browse/device/other/
 
 ## Palo Alto Networks
 
+- ⚪ [Defining the Standard for AI Security](https://www.paloaltonetworks.com/blog/2026/09/defining-the-standard-for-ai-security/)  
+  <small>2026-09-18 · Palo Alto Networks Blog · [in digest]({{ '/2026/09/18/network-security-digest/' | relative_url }})</small>
 - 🟡 [CVE-2026-0307 GlobalProtect App: Local Privilege Escalation Vulnerabilities (Severity: MEDIUM)](https://security.paloaltonetworks.com/CVE-2026-0307) — CVE-2026-0307  
   <small>2026-09-17 · Palo Alto Networks PSIRT · [in digest]({{ '/2026/09/17/network-security-digest/' | relative_url }})</small>
 

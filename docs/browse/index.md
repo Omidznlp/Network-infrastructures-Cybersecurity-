@@ -19,6 +19,12 @@ Pick a vendor, or browse by device type.
 
 - [🧠 AI & network devices]({{ '/browse/ai/' | relative_url }}) (17) <small>Check Point, Cisco</small>
 
+## By period
+
+- [This week]({{ '/browse/week/2026-W38/' | relative_url }}) (22)
+- [September]({{ '/browse/month/2026-09/' | relative_url }}) (22)
+- [Full archive by week, month and year]({{ '/browse/archive/' | relative_url }})
+
 ## By device type
 
 - [Firewalls]({{ '/browse/device/firewall/' | relative_url }}) (11) <small>Cisco</small>

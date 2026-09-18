@@ -201,6 +201,43 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
     }
     out += ["<!--index", json.dumps(index, indent=1), "-->", ""]
 
+    # The front page reads this to show the latest summary and the actions to take.
+    seen_actions: list[str] = []
+    for a in kept:
+        if a["relevance"] not in ("critical", "high"):
+            continue
+        for action in a.get("actions", [])[:2]:
+            if action not in seen_actions:
+                seen_actions.append(f"**{a.get('vendor', '')}** — {action}"
+                                    if a.get("vendor") else action)
+    latest = {
+        "date": f"{date:%Y-%m-%d}",
+        "url": index["url"],
+        "item_count": len(kept),
+        "critical_count": crit,
+        "kev": kev_cves,
+        "feeds_ok": collected["stats"]["feeds_ok"],
+        "top_story_title": top.get("title", ""),
+        "top_story_summary": (top.get("body", "").split("\n\n")[0] if top.get("body") else ""),
+        "top_actions": top.get("actions_now", [])[:5],
+        "executive_summary": analysis.get("executive_summary", []),
+        "key_actions": seen_actions[:8],
+        "headlines": [
+            {
+                "title": items_in[a["id"]]["title"],
+                "link": tidy_url(items_in[a["id"]]["link"]),
+                "summary": a.get("summary", ""),
+                "relevance": a["relevance"],
+                "vendor": a.get("vendor", ""),
+                "source": items_in[a["id"]]["source"],
+            }
+            for a in kept[:6] if a["id"] < len(items_in)
+        ],
+    }
+    data_dir = ROOT / "docs" / "_data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / "latest.json").write_text(json.dumps(latest, indent=2))
+
     out += [
         "## How this was produced",
         "",

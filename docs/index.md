@@ -5,31 +5,71 @@ title: Network Infrastructure Cybersecurity
 
 # Network device security digests
 
-Automated daily intelligence on vulnerabilities and attacks affecting **firewalls, VPN
-gateways, routers, switches, wireless controllers, load balancers and SD-WAN edge devices** —
-with the upgrade and hardening actions to take, for both current and legacy systems.
+Daily intelligence on vulnerabilities and attacks affecting **firewalls, VPN gateways, routers,
+switches, wireless controllers, load balancers and SD-WAN edge** — with the upgrade and hardening
+actions to take, for current *and* legacy systems. Unrelated security news is filtered out.
 
-Every edition leads with **how AI is being used to attack (and defend) network devices**.
+**[📡 Subscribe by RSS]({{ '/feed.xml' | relative_url }})** ·
+**[🏢 Browse by vendor]({{ '/browse/' | relative_url }})** ·
+**[🧠 AI & network devices]({{ '/browse/ai/' | relative_url }})**
 
-Sources: vendor PSIRT advisories, CISA / NCSC, threat-intel research blogs and the security
-press, enriched with the **CISA KEV** catalog and **FIRST EPSS** exploit-probability scores.
-Full source list: [SOURCES.md](https://github.com/Omidznlp/network-security-news/blob/main/SOURCES.md)
+{% assign L = site.data.latest %}
+{% if L %}
+---
 
-**[📡 Subscribe by RSS]({{ '/feed.xml' | relative_url }})** — new editions arrive in your reader;
-no need to check back.
+## 📋 Latest edition — {{ L.date }}
+
+**{{ L.item_count }} items · {{ L.critical_count }} critical{% if L.kev.size > 0 %} · KEV: {{ L.kev | join: ", " }}{% endif %}**
+
+### {{ L.top_story_title }}
+
+{{ L.top_story_summary }}
+
+{% if L.top_actions.size > 0 %}
+**Do this first**
+
+{% for a in L.top_actions %}- {{ a }}
+{% endfor %}{% endif %}
+
+{% if L.executive_summary.size > 0 %}
+**In summary**
+
+{% for s in L.executive_summary %}- {{ s }}
+{% endfor %}{% endif %}
+
+{% if L.key_actions.size > 0 %}
+### 🛠️ Solutions this edition
+
+{% for a in L.key_actions %}- {{ a }}
+{% endfor %}{% endif %}
+
+{% if L.headlines.size > 0 %}
+### Today's items
+
+{% for h in L.headlines %}- **{{ h.relevance | upcase }}** — [{{ h.title }}]({{ h.link }}){% if h.summary %}  
+  <small>{{ h.summary }}</small>{% endif %}
+{% endfor %}
+
+**[Read the full edition →]({{ L.url | relative_url }})**
+{% endif %}
+{% endif %}
 
 ---
 
-## Browse by device type and vendor
+## Browse
 
-Looking for one platform rather than one day? **[Browse the archive]({{ '/browse/' | relative_url }})**
-— pick a device class (firewalls, VPN gateways, routers, switches, wireless, load balancers,
-SD-WAN) and drill into the vendor, or jump straight to a vendor and see every device class it
-appears under.
+**[By vendor and device type]({{ '/browse/' | relative_url }})** — pick a vendor (Cisco, Fortinet,
+Palo Alto, Check Point…) and drill into firewalls, VPN gateways, routers or switches.
+
+**[By week, month and year]({{ '/browse/archive/' | relative_url }})** — everything published in a
+given period, grouped by vendor.
+
+**[AI & network devices]({{ '/browse/ai/' | relative_url }})** — AI-assisted attacks, AI on network
+gear, prompt injection against network management.
 
 ---
 
-## Editions
+## All editions
 
 <ul>
 {% for post in site.posts %}
@@ -45,4 +85,5 @@ appears under.
 
 ---
 
-*Automated. Always verify version numbers against the vendor advisory before scheduling a change.*
+*Automated, reviewed before publication. Always verify version numbers against the vendor advisory
+before scheduling a change.*

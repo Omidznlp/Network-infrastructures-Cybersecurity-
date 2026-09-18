@@ -21,7 +21,10 @@ collector/analyze.py      Local/API path: Messages API with schema-enforced stru
                           Also holds the validator used on the CI agent's output, and the
                           deterministic rule-based fallback.
 collector/render.py       Writes the Jekyll post; also emits the <!--index--> block.
-collector/index_site.py   Aggregates every post's index block into docs/browse/.
+collector/index_site.py   Aggregates every post's index block into docs/browse/: vendor pages,
+                          device pages, the AI topic page, and week/month/year archives.
+                          render.py also writes docs/_data/latest.json, which the front page
+                          reads for its summary and solutions block.
 collector/run.py          Orchestrator. --stage collect | render | all.
 ```
 

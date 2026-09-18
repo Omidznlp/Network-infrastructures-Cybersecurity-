@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
+from datetime import date as _date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -223,6 +224,74 @@ def build() -> list[Path]:
         path.write_text(page("AI & network devices", body, "/browse/ai/"))
         written.append(path)
 
+    # Time archives: week, month and year, each grouped by vendor.
+    def parse_day(value: str):
+        try:
+            return _date.fromisoformat((value or "")[:10])
+        except ValueError:
+            return None
+
+    by_week: dict[str, list[dict]] = defaultdict(list)
+    by_month: dict[str, list[dict]] = defaultdict(list)
+    by_year: dict[str, list[dict]] = defaultdict(list)
+    for e in entries:
+        day = parse_day(e.get("date", ""))
+        if not day:
+            continue
+        iso_year, iso_week, _ = day.isocalendar()
+        by_week[f"{iso_year}-W{iso_week:02d}"].append(e)
+        by_month[f"{day:%Y-%m}"].append(e)
+        by_year[f"{day:%Y}"].append(e)
+
+    MONTH_NAME = ["", "January", "February", "March", "April", "May", "June", "July",
+                  "August", "September", "October", "November", "December"]
+
+    def period_page(entries_in: list[dict], title: str, permalink: str, filename: str) -> None:
+        body = [f"*{len(entries_in)} item(s) in this period.*", ""]
+        grouped: dict[str, list[dict]] = defaultdict(list)
+        for e in entries_in:
+            for v in e.get("vendors") or ["Unspecified"]:
+                grouped[v].append(e)
+        for vendor in sorted(grouped, key=lambda v: (-len(grouped[v]), v)):
+            body += [f"## {vendor} ({len(grouped[vendor])})", ""]
+            body += [entry_line(e) for e in sorted(grouped[vendor],
+                                                   key=lambda x: x.get("date", ""), reverse=True)]
+            body += [""]
+        path = BROWSE / filename
+        path.write_text(page(title, body, permalink))
+        written.append(path)
+
+    for week, rows in by_week.items():
+        period_page(rows, f"Week {week.split('-W')[1]} of {week.split('-W')[0]}",
+                    f"/browse/week/{week}/", f"period-week-{week}.md")
+    for month, rows in by_month.items():
+        y, m = month.split("-")
+        period_page(rows, f"{MONTH_NAME[int(m)]} {y}", f"/browse/month/{month}/",
+                    f"period-month-{month}.md")
+    for year, rows in by_year.items():
+        period_page(rows, f"Year {year}", f"/browse/year/{year}/", f"period-year-{year}.md")
+
+    # Archive hub listing every period.
+    abody = ["Everything published, grouped by period. Each page breaks the period down by vendor.", ""]
+    for year in sorted(by_year, reverse=True):
+        abody += [f"## {year} — {len(by_year[year])} items", "",
+                  f"- [Whole year]({{{{ '/browse/year/{year}/' | relative_url }}}}) "
+                  f"({len(by_year[year])})", "", "**Months**", ""]
+        for month in sorted((m for m in by_month if m.startswith(year)), reverse=True):
+            mn = MONTH_NAME[int(month.split("-")[1])]
+            abody.append(f"- [{mn} {year}]({{{{ '/browse/month/{month}/' | relative_url }}}}) "
+                         f"({len(by_month[month])})")
+        abody += ["", "**Weeks**", ""]
+        for week in sorted((w for w in by_week if w.startswith(year)), reverse=True):
+            num = week.split("-W")[1]
+            days = sorted({e["date"][:10] for e in by_week[week] if e.get("date")})
+            span = f"{days[0]} to {days[-1]}" if days else ""
+            abody.append(f"- [Week {num}]({{{{ '/browse/week/{week}/' | relative_url }}}}) "
+                         f"({len(by_week[week])}) <small>{span}</small>")
+        abody += [""]
+    (BROWSE / "archive.md").write_text(page("Archive by week, month and year", abody, "/browse/archive/"))
+    written.append(BROWSE / "archive.md")
+
     # The browse hub.
     body = ["Pick a vendor, or browse by device type.", "", "## By vendor", ""]
     for vendor in sorted(by_vendor):
@@ -236,6 +305,19 @@ def build() -> list[Path]:
         body += ["", "## By topic", "",
                  f"- [🧠 AI & network devices]({{{{ '/browse/ai/' | relative_url }}}}) "
                  f"({len(ai_entries)}) <small>{ai_vendors}</small>"]
+    if by_year:
+        latest_week = sorted(by_week, reverse=True)[0] if by_week else None
+        latest_month = sorted(by_month, reverse=True)[0] if by_month else None
+        body += ["", "## By period", ""]
+        if latest_week:
+            body.append(f"- [This week]({{{{ '/browse/week/{latest_week}/' | relative_url }}}}) "
+                        f"({len(by_week[latest_week])})")
+        if latest_month:
+            mn = MONTH_NAME[int(latest_month.split("-")[1])]
+            body.append(f"- [{mn}]({{{{ '/browse/month/{latest_month}/' | relative_url }}}}) "
+                        f"({len(by_month[latest_month])})")
+        body.append(f"- [Full archive by week, month and year]"
+                    f"({{{{ '/browse/archive/' | relative_url }}}})")
     body += ["", "## By device type", ""]
     for device in [d for d in DEVICE_ORDER if d in by_device] + \
                   [d for d in sorted(by_device) if d not in DEVICE_ORDER]:
@@ -248,7 +330,8 @@ def build() -> list[Path]:
     written.append(hub)
 
     print(f"[index] {len(entries)} entries -> {len(by_device)} device pages, "
-          f"{len(by_vendor)} vendor pages")
+          f"{len(by_vendor)} vendor pages, {len(by_week)} weeks, {len(by_month)} months, "
+          f"{len(by_year)} years")
     return written
 
 

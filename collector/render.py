@@ -159,12 +159,16 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
 
     # AI section: today's if there is real AI news, otherwise the last one, dated.
     ai = analysis.get("ai_section") or {}
+    ai_vendors = sorted({a.get("vendor") for a in kept
+                         if (a.get("ai_angle") or "").strip() and a.get("vendor")})
     if ai.get("body"):
         stamp = ""
         if ai.get("carried_forward"):
             stamp = (f"  \n*No AI-related network-device news in this window. "
                      f"Carried forward from {ai.get('written', 'an earlier edition')}.*")
         out += [f"## 🧠 AI & network devices — {ai.get('title', '')}", "", ai["body"] + stamp, ""]
+        if ai_vendors:
+            out += [f"**Vendors with an AI angle in this edition:** {', '.join(ai_vendors)}", ""]
         if ai.get("prevention_modern"):
             out += ["**Preventing it on current systems**", "", bullets(ai["prevention_modern"]), ""]
         if ai.get("prevention_legacy"):
@@ -185,6 +189,8 @@ def render(collected: dict, analysis: dict, edition: str) -> str:
                 "vendors": [a.get("vendor")] if a.get("vendor") else items_in[a["id"]]["vendors"],
                 "cves": items_in[a["id"]]["cves"],
                 "kev": bool(items_in[a["id"]]["kev"]),
+                "ai": bool(items_in[a["id"]].get("ai_related") or (a.get("ai_angle") or "").strip()),
+                "ai_angle": (a.get("ai_angle") or "").strip(),
             }
             for a in kept if a["id"] < len(items_in)
         ],

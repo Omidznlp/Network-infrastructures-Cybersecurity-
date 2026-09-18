@@ -59,6 +59,32 @@ DEVICE_CANON = {
 }
 
 
+# Editions published before entries carried an "ai" flag: fall back to the title.
+AI_HINTS = ("ai-", " ai ", "artificial intelligence", "llm", "genai", "generative ai",
+            "machine learning", "prompt injection", "ai agent", "agentic", "deepfake",
+            "ai-driven", "ai-assisted", "ai-powered", "copilot", "chatgpt")
+
+
+def is_ai(entry: dict) -> bool:
+    if "ai" in entry:
+        return bool(entry["ai"])
+    blob = f" {entry.get('title', '').lower()} "
+    return any(h in blob for h in AI_HINTS)
+
+
+def vendor_from_source(source: str) -> str:
+    """Infer the vendor from the feed name when the item text named none."""
+    low = (source or "").lower()
+    for key, canon in VENDOR_CANON.items():
+        if key and len(key) > 2 and key in low:
+            return canon
+    if "talos" in low:
+        return "Cisco"
+    if "unit 42" in low:
+        return "Palo Alto Networks"
+    return "Unspecified"
+
+
 def canon_vendor(name: str) -> str:
     key = (name or "").strip().lower()
     return VENDOR_CANON.get(key, (name or "Unspecified").strip())
@@ -90,10 +116,15 @@ def read_index() -> list[dict]:
         for entry in data.get("entries", []):
             entry["post_url"] = data.get("url", "")
             entry["date"] = data.get("date", "")
-            entry["vendors"] = sorted({canon_vendor(v) for v in (entry.get("vendors") or [])
-                                       if v}) or ["Unspecified"]
+            vendors = sorted({canon_vendor(v) for v in (entry.get("vendors") or []) if v})
+            if not vendors or vendors == ["Unspecified"]:
+                # A vendor PSIRT or vendor research blog identifies the vendor even when the
+                # item text never names a product ("Cisco Talos" -> Cisco).
+                vendors = [vendor_from_source(entry.get("source", ""))]
+            entry["vendors"] = vendors
             entry["device_types"] = sorted({canon_device(d) for d in
                                             (entry.get("device_types") or [])}) or ["other"]
+            entry["ai"] = is_ai(entry)
             entries.append(entry)
     return entries
 
@@ -170,6 +201,28 @@ def build() -> list[Path]:
         path.write_text(page(vendor, body, f"/browse/vendor/{slug(vendor)}/"))
         written.append(path)
 
+    # AI topic page - same vendor-first shape as the device pages.
+    ai_entries = [e for e in entries if e.get("ai")]
+    if ai_entries:
+        body = [f"*{len(ai_entries)} item(s) with an AI angle, across all editions.*", "",
+                "Items where AI is part of the story: AI-assisted attacks or vulnerability "
+                "discovery, AI/LLM/AIOps integrations on network gear, or prompt injection "
+                "against network management.", ""]
+        grouped: dict[str, list[dict]] = defaultdict(list)
+        for e in ai_entries:
+            for v in e.get("vendors") or ["Unspecified"]:
+                grouped[v].append(e)
+        for vendor in sorted(grouped):
+            body += [f"## {vendor}", ""]
+            for e in sorted(grouped[vendor], key=lambda x: x.get("date", ""), reverse=True):
+                body.append(entry_line(e))
+                if e.get("ai_angle"):
+                    body.append(f"  <small>**AI angle:** {e['ai_angle']}</small>")
+            body += [""]
+        path = BROWSE / "topic-ai.md"
+        path.write_text(page("AI & network devices", body, "/browse/ai/"))
+        written.append(path)
+
     # The browse hub.
     body = ["Pick a vendor, or browse by device type.", "", "## By vendor", ""]
     for vendor in sorted(by_vendor):
@@ -178,6 +231,11 @@ def build() -> list[Path]:
                                     for d in (e.get("device_types") or ["other"])}))
         body.append(f"- [{vendor}]({{{{ '/browse/vendor/{slug(vendor)}/' | relative_url }}}}) "
                     f"({len(by_vendor[vendor])}) <small>{devices}</small>")
+    if ai_entries:
+        ai_vendors = ", ".join(sorted({v for e in ai_entries for v in e["vendors"]}))
+        body += ["", "## By topic", "",
+                 f"- [🧠 AI & network devices]({{{{ '/browse/ai/' | relative_url }}}}) "
+                 f"({len(ai_entries)}) <small>{ai_vendors}</small>"]
     body += ["", "## By device type", ""]
     for device in [d for d in DEVICE_ORDER if d in by_device] + \
                   [d for d in sorted(by_device) if d not in DEVICE_ORDER]:
